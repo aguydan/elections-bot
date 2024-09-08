@@ -15,12 +15,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.14.1"
+    "discord.js": "^14.14.1",
+    "kysely": "^0.27.4",
+    "pg": "^8.12.0"
   },
   "devDependencies": {
     "@swc/cli": "^0.3.10",
     "@swc/core": "^1.4.7",
     "@types/node": "^20.11.25",
+    "@types/pg": "^8.11.8",
     "chokidar": "^3.6.0",
     "concurrently": "^8.2.2",
     "discord-api-types": "^0.37.73",
