@@ -43,6 +43,10 @@ async function start(): Promise<void> {
     await bot.start();
 }
 
+process.on('unhandledRejection', (reason, _promise) => {
+    console.log('unhandled rejection' + reason);
+});
+
 start().catch(error => {
     console.log(error);
 });

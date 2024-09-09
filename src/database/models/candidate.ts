@@ -25,5 +25,5 @@ export interface CandidateTable {
     score: JSONColumnType<CandidateScore>;
     created_at: ColumnType<Date, never, never>;
     updated_at: ColumnType<Date, string | undefined, string>;
-    election_id: number;
+    election_id: number | null;
 }

@@ -1,34 +1,40 @@
 {
-  "name": "elections-bot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/start-bot.js",
-  "type": "module",
-  "scripts": {
-    "build": "rimraf dist && npx swc src -d dist --strip-leading-paths",
-    "commands:register": "npm run build && node --enable-source-maps dist/start-bot.js commands register\"",
-    "dev": "concurrently \"npm run watch:swc\" \"npm run watch:nodemon\"",
-    "watch:swc": "npx swc src -d dist --strip-leading-paths -w",
-    "watch:nodemon": "nodemon --watch './**/*.{ts}'"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "discord.js": "^14.14.1",
-    "kysely": "^0.27.4",
-    "pg": "^8.12.0"
-  },
-  "devDependencies": {
-    "@swc/cli": "^0.3.10",
-    "@swc/core": "^1.4.7",
-    "@types/node": "^20.11.25",
-    "@types/pg": "^8.11.8",
-    "chokidar": "^3.6.0",
-    "concurrently": "^8.2.2",
-    "discord-api-types": "^0.37.73",
-    "nodemon": "^3.1.0",
-    "rimraf": "^5.0.5",
-    "typescript": "^5.4.2"
-  }
+    "name": "elections-bot",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/start-bot.js",
+    "type": "module",
+    "scripts": {
+        "build": "rimraf dist && npx swc src -d dist --strip-leading-paths",
+        "commands:register": "npm run build && node --enable-source-maps dist/start-bot.js commands register\"",
+        "dev": "concurrently \"npm run watch:swc\" \"npm run watch:nodemon\"",
+        "start": "npm run start:bot",
+        "start:bot": "npm run build && node --enable-source-maps dist/start-bot.js",
+        "start:api": "npm run build && node --enable-source-maps dist/start-api.js",
+        "watch:swc": "npx swc src -d dist --strip-leading-paths -w",
+        "watch:nodemon": "nodemon --watch './**/*.{ts}'"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "discord.js": "^14.14.1",
+        "express": "^4.19.2",
+        "express-promise-router": "^4.1.1",
+        "kysely": "^0.27.4",
+        "pg": "^8.12.0"
+    },
+    "devDependencies": {
+        "@swc/cli": "^0.3.10",
+        "@swc/core": "^1.4.7",
+        "@types/express": "^4.17.21",
+        "@types/node": "^20.11.25",
+        "@types/pg": "^8.11.8",
+        "chokidar": "^3.6.0",
+        "concurrently": "^8.2.2",
+        "discord-api-types": "^0.37.73",
+        "nodemon": "^3.1.0",
+        "rimraf": "^5.0.5",
+        "typescript": "^5.4.2"
+    }
 }
