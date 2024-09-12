@@ -32,4 +32,16 @@ export class ElectionsController implements Controller {
     private async createElection(req: Request, res: Response): Promise<void> {
         res.status(200).json(await electionRepo.create(req.body));
     }
+
+    private async updateElection(req: Request, res: Response): Promise<void> {
+        const id = parseInt(req.params.candidateId!);
+
+        res.status(200).json(await electionRepo.update(id, req.body));
+    }
+
+    private async deleteElection(req: Request, res: Response): Promise<void> {
+        const id = parseInt(req.params.candidateId!);
+
+        res.status(200).json(await electionRepo.delete(id));
+    }
 }

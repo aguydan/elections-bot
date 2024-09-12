@@ -1,4 +1,4 @@
-import { ColumnType, Generated, Insertable, Selectable } from 'kysely';
+import { ColumnType, Generated } from 'kysely';
 
 export interface ElectionResultTable {
     id: Generated<number>;
@@ -10,6 +10,3 @@ export interface ElectionResultTable {
     candidate_id: number;
     election_id: number;
 }
-
-export type ElectionResult = Selectable<ElectionResultTable>;
-export type NewElectionResult = Insertable<ElectionResultTable>;

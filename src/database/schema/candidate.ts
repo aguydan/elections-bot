@@ -1,4 +1,4 @@
-import { ColumnType, Generated, Insertable, JSONColumnType, Selectable } from 'kysely';
+import { ColumnType, Generated, JSONColumnType } from 'kysely';
 
 export interface CandidateScore {
     gdp: number;
@@ -27,6 +27,3 @@ export interface CandidateTable {
     updated_at: ColumnType<Date | null, never, Date>;
     election_id: number | null;
 }
-
-export type Candidate = Selectable<CandidateTable>;
-export type NewCandidate = Insertable<CandidateTable>;
