@@ -1,33 +1,39 @@
 import { Repo } from './index.js';
 import { Kysely } from 'kysely';
-import { Database } from '../schema/index.js';
-import { OperationWrapper } from '@/models/operation-wrapper.js';
+import { Candidate, CandidateUpdate, Database, NewCandidate } from '../schema/index.js';
 
 export class CandidateRepo implements Repo {
     constructor(private readonly db: Kysely<Database>) {}
 
-    public async getAll(): Promise<OperationWrapper<'candidate', 'select'>[]> {
+    public async getAll(): Promise<Candidate[]> {
         return await this.db.selectFrom('candidate').selectAll().execute();
     }
 
-    public async getById(id: number): Promise<OperationWrapper<'candidate', 'select'>[]> {
+    public async getById(id: number): Promise<Candidate> {
         if (Number.isNaN(id)) {
             throw new Error('Invalid ID in request parameter. Must be an integer.');
         }
 
-        return await this.db.selectFrom('candidate').selectAll().where('id', '=', id).execute();
+        const candidate = await this.db
+            .selectFrom('candidate')
+            .selectAll()
+            .where('id', '=', id)
+            .executeTakeFirst();
+
+        if (!candidate) {
+            throw new Error(`No row with the ID ${id} exists in the table.`);
+        }
+
+        return candidate;
     }
 
-    public async create(data: OperationWrapper<'candidate', 'insert'>): Promise<number> {
+    public async create(data: NewCandidate): Promise<number> {
         const result = await this.db.insertInto('candidate').values(data).executeTakeFirst();
 
         return Number(result.numInsertedOrUpdatedRows);
     }
 
-    public async update(
-        id: number,
-        data: OperationWrapper<'candidate', 'update'>
-    ): Promise<number> {
+    public async update(id: number, data: CandidateUpdate): Promise<number> {
         if (Number.isNaN(id)) {
             throw new Error('Invalid ID in request parameter. Must be an integer.');
         }
