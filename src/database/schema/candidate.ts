@@ -22,8 +22,9 @@ export interface CandidateTable {
     origin: string | null;
     running_mate: string | null;
     party: string | null;
+    image_url: string | null;
     score: JSONColumnType<CandidateScore>;
-    created_at: ColumnType<Date, Date, never>;
+    created_at: ColumnType<Date, never, never>;
     updated_at: ColumnType<Date | null, never, Date>;
 }
 

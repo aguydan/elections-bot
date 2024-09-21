@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { Controller } from './controller.js';
+import { Controller } from './index.js';
 import PromiseRouter from 'express-promise-router';
 
 export class RootController implements Controller {
