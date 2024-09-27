@@ -9,6 +9,7 @@ import {
     Message,
     MessageComponentInteraction,
     ModalSubmitInteraction,
+    WebhookMessageEditOptions,
 } from 'discord.js';
 
 const IGNORED_ERRORS = [
@@ -71,6 +72,31 @@ export class InteractionUtils {
             if (
                 error instanceof DiscordAPIError &&
                 typeof error.code === 'number' &&
+                IGNORED_ERRORS.includes(error.code)
+            ) {
+                return;
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    public static async editReply(
+        intr: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
+        content: string | EmbedBuilder | WebhookMessageEditOptions
+    ): Promise<Message | undefined> {
+        try {
+            let options: WebhookMessageEditOptions =
+                typeof content === 'string'
+                    ? { content }
+                    : content instanceof EmbedBuilder
+                    ? { embeds: [content] }
+                    : content;
+            return await intr.editReply(options);
+        } catch (error) {
+            if (
+                error instanceof DiscordAPIError &&
+                typeof error.code == 'number' &&
                 IGNORED_ERRORS.includes(error.code)
             ) {
                 return;

@@ -1,11 +1,10 @@
-import { CommandHandler, SelectMenuHandler } from '@/events/index.js';
+import { CommandHandler } from '@/events/index.js';
 import {
     AutocompleteInteraction,
     Client,
     CommandInteraction,
     Events,
     Interaction,
-    StringSelectMenuInteraction,
 } from 'discord.js';
 
 export class Bot {
@@ -14,8 +13,7 @@ export class Bot {
     constructor(
         private token: string,
         private client: Client,
-        private commandHandler: CommandHandler,
-        private selectMenuHandler: SelectMenuHandler
+        private commandHandler: CommandHandler
     ) {}
 
     public async start(): Promise<void> {
@@ -50,12 +48,6 @@ export class Bot {
         if (intr instanceof CommandInteraction || intr instanceof AutocompleteInteraction) {
             try {
                 await this.commandHandler.process(intr);
-            } catch (error) {
-                console.log(error);
-            }
-        } else if (intr instanceof StringSelectMenuInteraction) {
-            try {
-                await this.selectMenuHandler.process(intr);
             } catch (error) {
                 console.log(error);
             }

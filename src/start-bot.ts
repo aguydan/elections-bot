@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { CommandRegistrationService } from './services/index.js';
 import { Bot } from './models/bot.js';
 import { ChatCommandMetadata, Command } from './commands/index.js';
-import { CommandHandler, SelectMenuHandler } from './events/index.js';
+import { CommandHandler } from './events/index.js';
 import { ElectionCommand } from './commands/chat/index.js';
 
 //по умолчанию загрузить json конфиг в es6 модуль нельзя,
@@ -20,9 +20,8 @@ async function start(): Promise<void> {
     const commands: Command[] = [new ElectionCommand()];
 
     const commandHandler = new CommandHandler(commands);
-    const selectMenuHandler = new SelectMenuHandler();
 
-    const bot = new Bot(Config.client.token, client, commandHandler, selectMenuHandler);
+    const bot = new Bot(Config.client.token, client, commandHandler);
 
     if (process.argv[2] === 'commands') {
         try {
