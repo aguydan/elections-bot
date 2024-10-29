@@ -170,21 +170,25 @@ export class ElectionCommand implements Command {
         const promises = participantIds.map(id => candidateRepo.getById(parseInt(id)));
         const participants = await Promise.all(promises);
 
-        //percentages for each candidate
-        const percentages = ElectionUtils.getIndividualPercentages(participants);
+        //normalized and modified for each candidate
+        const scores = ElectionUtils.getScores(participants);
 
         const election = await electionRepo.getById(electionId);
 
-        //getIndividualVotes would be more logical and coherent
-        const votes = ElectionUtils.getTotalVotes(election);
-        await ElectionUtils.saveResults(electionId, percentages, votes);
+        const results = ElectionUtils.getResults(election, scores);
+        await ElectionUtils.saveResults(electionId, results);
 
-        const buffer = await FrontendUtils.getResultsImage(`${FRONTEND_PATH}/results`);
+        const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
+
+        if (!buffer) {
+            //create new interaction with embed for this error
+            throw new Error('something about suspicions voting results');
+        }
         const image = new AttachmentBuilder(buffer, { name: 'results.jpg' });
 
         const resultsEmbed = new EmbedBuilder({
             title: 'The results have arrived!',
-            description: JSON.stringify(percentages),
+            description: JSON.stringify(results),
             timestamp: new Date().toISOString(),
             image: {
                 url: `attachment://results.jpg`,

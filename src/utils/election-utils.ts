@@ -5,9 +5,12 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');
 
+type Scores = Record<number, number>;
+type Results = Record<number, { popularVote: number; percentage: number }>;
+
 export class ElectionUtils {
-    public static getIndividualPercentages(participants: Candidate[]): Record<number, number> {
-        const scores: Record<number, number> = {};
+    public static getScores(participants: Candidate[]): Scores {
+        const scores: Scores = {};
 
         //compute scores
 
@@ -20,37 +23,88 @@ export class ElectionUtils {
             scores[participant.id] = totalScore;
         }
 
-        const sumOfScores = Object.values(scores).reduce((acc, score) => acc + score, 0);
+        //randomize scores
 
-        //randomize scores!!!!!! do we even do it here?
+        for (const [id, score] of Object.entries(scores)) {
+            const random = Math.random();
+            let modified = score;
+
+            if (random < 0.02) {
+                modified += 0.4;
+            } else if (random < 0.05) {
+                modified += 0.2 * score;
+            } else if (random < 0.1) {
+                modified -= 0.2 * score;
+            } else if (random < 0.5) {
+                modified += 0.07 * score;
+            } else if (random < 0.9) {
+                modified -= 0.07 * score;
+            }
+
+            console.log(random);
+
+            scores[parseInt(id)] = modified;
+        }
+
+        const sumOfScores = Object.values(scores).reduce((acc, score) => acc + score, 0);
 
         //normalize scores
 
         for (const [id, score] of Object.entries(scores)) {
-            scores[parseInt(id)] = parseFloat(((score / sumOfScores) * 100).toFixed(2));
+            scores[parseInt(id)] = score / sumOfScores;
         }
 
+        console.log(scores);
         return scores;
     }
 
-    public static getTotalVotes(election: Election): number {
-        return election.turnout
-            ? election.electorate * Math.ceil(election.turnout / 100)
-            : election.electorate * Math.random();
+    //split getting results and percentages
+    public static getResults(election: Election, scores: Scores): Results {
+        const votingPool = election.turnout
+            ? Math.round(election.electorate * (election.turnout / 100))
+            : Math.round(election.electorate * Math.random());
+
+        if (votingPool === 0) {
+            throw new Error('elections cannot proceed because no one showed up');
+        }
+
+        const results: Results = {};
+        let hasFreeVotes = true;
+        let freeVotes = votingPool;
+
+        const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+
+        for (const [id, score] of sortedScores) {
+            // ADDRESSED:
+            // if votingPool is 1 and score for every candidate is less than 0.5 then everyone will get 0 votes
+            let votes = hasFreeVotes ? Math.round(votingPool * score) : 0;
+
+            if (votes === 0 && hasFreeVotes) {
+                votes = 1;
+            }
+
+            freeVotes -= votes;
+
+            if (freeVotes === 0 && hasFreeVotes) {
+                hasFreeVotes = false;
+            }
+
+            const percentage = (votes / votingPool) * 100; //.toFixed(2));
+
+            results[parseInt(id)] = { popularVote: votes, percentage };
+        }
+
+        console.log(results);
+        return results;
     }
 
-    //getIndividualVotes??????
-    //to be implemented
+    public static async saveResults(electionId: number, results: Results): Promise<void> {
+        for (const [id, fields] of Object.entries(results)) {
+            const { popularVote, percentage } = fields;
 
-    public static async saveResults(
-        electionId: number,
-        percentages: Record<number, number>,
-        votes: number
-    ): Promise<void> {
-        for (const [id, percentage] of Object.entries(percentages)) {
             await electionResultRepo.create({
-                popular_vote: Math.ceil(votes * (percentage / 100)), //this is what getIndividualVotes is gonna replace
                 percentage: percentage,
+                popular_vote: popularVote,
                 created_at: new Date(),
                 candidate_id: parseInt(id),
                 election_id: electionId,

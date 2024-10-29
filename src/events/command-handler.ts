@@ -4,6 +4,7 @@ import {
     AutocompleteInteraction,
     ChatInputCommandInteraction,
     CommandInteraction,
+    EmbedBuilder,
 } from 'discord.js';
 import { CommandUtils, InteractionUtils } from '@/utils/index.js';
 
@@ -59,6 +60,19 @@ export class CommandHandler implements EventHandler {
             await command.execute(intr);
         } catch (error) {
             console.log(error);
+
+            const errorEmbed = new EmbedBuilder({
+                color: 0xff0000,
+                title: 'The voting polls decimated!',
+                description:
+                    'A terrible tragedy took place that undermines where we stand as a country. Elections will be rescheduled',
+                timestamp: new Date().toISOString(),
+                footer: {
+                    text: 'Central Election Commitee',
+                },
+            });
+
+            InteractionUtils.send(intr, errorEmbed);
         }
     }
 }

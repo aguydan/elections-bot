@@ -1,17 +1,25 @@
 import puppeteer from 'puppeteer';
 
 export class FrontendUtils {
-    public static async getResultsImage(path: string) {
+    public static async getResultsScreenshot(path: string): Promise<Buffer | null> {
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
 
         await page.setViewport({ width: 1920, height: 1080 });
-        await page.goto(path, { waitUntil: 'networkidle0' });
-        const screenshot = await page.screenshot();
 
-        await page.close();
-        await browser.close();
+        try {
+            await page.goto(path, { waitUntil: 'networkidle0' });
+            const screenshot = await page.screenshot();
 
-        return Buffer.from(screenshot);
+            await page.close();
+            await browser.close();
+
+            return Buffer.from(screenshot);
+        } catch (error) {
+            //in case the frontend is not available
+            console.log(error);
+
+            return null;
+        }
     }
 }
