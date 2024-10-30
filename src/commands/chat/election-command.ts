@@ -7,6 +7,7 @@ import {
     ComponentType,
     EmbedBuilder,
     StringSelectMenuBuilder,
+    StringSelectMenuInteraction,
 } from 'discord.js';
 import { Command } from '../index.js';
 import { InteractionUtils } from '@/utils/index.js';
@@ -15,147 +16,184 @@ import { FRONTEND_PATH } from '@/constants/frontend.js';
 import { ElectionUtils } from '@/utils/election-utils.js';
 import { FrontendUtils } from '@/utils/frontend-utils.js';
 
-//WE NEED EMBEDS!!!!!!
 //probably also need to encapsulate creating menus and buttons or just put them in different place
 //this all needs error handling, probably externally
+//move EMBEDS elsewhere!!!!
 
 export class ElectionCommand implements Command {
     public names = ['election'];
 
-    public async execute(intr: ChatInputCommandInteraction): Promise<void> {
+    public async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+        let prevInteraction: ChatInputCommandInteraction | StringSelectMenuInteraction =
+            interaction;
+        let currInteraction;
+
         const elections = await electionRepo.getAll();
 
-        //button creation
-
-        const createElectionPresetButton = new ButtonBuilder({
-            label: 'Create election preset',
-            url: `${FRONTEND_PATH}/elections/create`,
-            style: ButtonStyle.Link,
+        const electionsButton = new ActionRowBuilder<ButtonBuilder>({
+            components: [
+                new ButtonBuilder({
+                    label: 'Create election',
+                    url: `${FRONTEND_PATH}/elections/create`,
+                    style: ButtonStyle.Link,
+                }),
+            ],
         });
 
-        const electionPresetsMenu = new StringSelectMenuBuilder({
-            custom_id: 'electionPresets',
-            placeholder: 'Choose election preset',
-            options: elections.map(election => {
-                return {
-                    value: election.id.toString(),
-                    label: election.name,
-                };
-            }),
+        const electionsMenuId = crypto.randomUUID();
+
+        const electionsMenu = new ActionRowBuilder<StringSelectMenuBuilder>({
+            components: [
+                new StringSelectMenuBuilder({
+                    custom_id: electionsMenuId, //probably should be random so that every command sequence is indeoendent
+                    placeholder: 'Choose from the existing',
+                    options: elections.map(election => {
+                        return {
+                            value: election.id.toString(),
+                            label: election.name,
+                        };
+                    }),
+                }),
+            ],
         });
 
-        const buttonRow = new ActionRowBuilder<ButtonBuilder>({
-            components: [createElectionPresetButton],
+        await InteractionUtils.send(prevInteraction, {
+            content: '👑 Create a new election preset or choose an existing one.',
+            components: [electionsButton, electionsMenu],
         });
 
-        const electionPresetsRow = new ActionRowBuilder<StringSelectMenuBuilder>({
-            components: [electionPresetsMenu],
-        });
-
-        await InteractionUtils.send(intr, {
-            content: 'Create a new election preset or choose one of the existing.',
-            components: [buttonRow, electionPresetsRow],
-        });
-
-        const menuIntr = await intr.channel?.awaitMessageComponent({
+        currInteraction = await prevInteraction.channel?.awaitMessageComponent({
+            filter: interaction => interaction.customId === electionsMenuId,
             componentType: ComponentType.StringSelect,
             time: 120000,
         });
 
-        if (!menuIntr?.values.length) {
+        if (!currInteraction?.values.length) {
             console.log('no election id received');
             return;
         }
 
-        const electionId = parseInt(menuIntr.values[0]!);
+        const election = await electionRepo.getById(parseInt(currInteraction.values[0]!));
 
-        await InteractionUtils.editReply(intr, {
-            content: 'Hey this is me' + electionId,
+        const electionEmbed = new EmbedBuilder({
+            title: election.name,
+            description:
+                'The election will take place in the country of ' +
+                election.country +
+                ' on ' +
+                election.date,
+            timestamp: new Date().toISOString(),
+            footer: {
+                text: 'Central Election Commitee',
+            },
+        });
+
+        await InteractionUtils.editReply(prevInteraction, {
+            content: null,
             components: [],
+            embeds: [electionEmbed],
         });
 
         const candidates = await candidateRepo.getAll();
 
-        //button creation
-
-        const createCandidateButton = new ButtonBuilder({
-            label: 'Create candidate preset',
-            url: `${FRONTEND_PATH}/candidates/create`,
-            style: ButtonStyle.Link,
+        const candidatesButton = new ActionRowBuilder<ButtonBuilder>({
+            components: [
+                new ButtonBuilder({
+                    label: 'Create candidate',
+                    url: `${FRONTEND_PATH}/candidates/create`,
+                    style: ButtonStyle.Link,
+                }),
+            ],
         });
 
-        const candidatesMenu = new StringSelectMenuBuilder({
-            custom_id: 'candidates',
-            placeholder: 'Choose candidate preset',
-            options: candidates.map(candidate => {
-                return {
-                    value: candidate.id.toString(),
-                    label: candidate.name,
-                };
-            }),
-            min_values: 2,
-            max_values: candidates.length,
+        const candidatesMenu = new ActionRowBuilder<StringSelectMenuBuilder>({
+            components: [
+                new StringSelectMenuBuilder({
+                    custom_id: 'candidatesMenu',
+                    placeholder: 'Choose from the existing',
+                    options: candidates.map(candidate => {
+                        return {
+                            value: candidate.id.toString(),
+                            label: candidate.name,
+                        };
+                    }),
+                    min_values: 2,
+                    max_values: candidates.length,
+                }),
+            ],
         });
 
-        const buttonRow2 = new ActionRowBuilder<ButtonBuilder>({
-            components: [createCandidateButton],
-        });
-
-        const candidatesRow = new ActionRowBuilder<StringSelectMenuBuilder>({
-            components: [candidatesMenu],
-        });
-
-        await InteractionUtils.send(menuIntr, {
+        await InteractionUtils.send(currInteraction, {
             content: 'Create a new candidate or choose at least 2 as participants in the election.',
-            components: [buttonRow2, candidatesRow],
+            components: [candidatesButton, candidatesMenu],
         });
 
-        const candidatesIntr = await menuIntr.channel?.awaitMessageComponent({
+        //we make the current interaction to be the old interaction after every reply to current interaction
+        prevInteraction = currInteraction;
+
+        currInteraction = await prevInteraction.channel?.awaitMessageComponent({
+            filter: interaction => interaction.customId === 'candidatesMenu',
             componentType: ComponentType.StringSelect,
             time: 120000,
         });
 
-        if (!candidatesIntr?.values.length) {
+        if (!currInteraction?.values.length) {
             console.log('no values received');
             return;
         }
 
-        const participantIds = candidatesIntr.values;
+        //we probably shouldn't even do this since we have an array of candidates queried some lines before
+        const promises = currInteraction.values.map(id => candidateRepo.getById(parseInt(id)));
+        const participants = await Promise.all(promises);
 
-        await InteractionUtils.editReply(menuIntr, {
-            content: 'Chosen candidates = ' + participantIds,
+        const participantsEmbed = new EmbedBuilder({
+            title: election.name,
+            description:
+                'The election will take place in the country of ' +
+                election.country +
+                ' on ' +
+                election.date,
+            timestamp: new Date().toISOString(),
+            footer: {
+                text: 'Central Election Commitee',
+            },
+        });
+
+        await InteractionUtils.editReply(prevInteraction, {
+            content: null,
             components: [],
+            embeds: [participantsEmbed],
         });
 
-        //hold election button
-
-        const holdElectionButton = new ButtonBuilder({
-            custom_id: 'holdElectionButton',
-            label: 'Hold election',
-            style: ButtonStyle.Primary,
+        const holdElectionButton = new ActionRowBuilder<ButtonBuilder>({
+            components: [
+                new ButtonBuilder({
+                    custom_id: 'holdElectionButton',
+                    label: 'Hold election',
+                    style: ButtonStyle.Primary,
+                }),
+            ],
         });
 
-        const buttonRow3 = new ActionRowBuilder<ButtonBuilder>({
+        await InteractionUtils.send(currInteraction, {
             components: [holdElectionButton],
         });
 
-        await InteractionUtils.send(candidatesIntr, {
-            components: [buttonRow3],
-        });
+        prevInteraction = currInteraction;
 
-        //hold election sequence
-
-        const buttonIntr = await candidatesIntr.channel?.awaitMessageComponent({
+        //Hold election sequence
+        currInteraction = await prevInteraction.channel?.awaitMessageComponent({
+            filter: interaction => interaction.customId === 'holdElectionButton',
             componentType: ComponentType.Button,
             time: 120000,
         });
 
-        if (!buttonIntr) {
-            console.log(buttonIntr);
+        if (!currInteraction) {
+            console.log('button press wasnt registered');
             return;
         }
 
-        const countingEmbed = new EmbedBuilder({
+        const loadingEmbed = new EmbedBuilder({
             title: 'Votes are being counted...',
             description: 'Soon the central election commitee will present the results',
             timestamp: new Date().toISOString(),
@@ -164,19 +202,13 @@ export class ElectionCommand implements Command {
             },
         });
 
-        await InteractionUtils.send(buttonIntr, countingEmbed);
-
-        //we probably shouldn't even do this since we have an array of candidates queried some lines before
-        const promises = participantIds.map(id => candidateRepo.getById(parseInt(id)));
-        const participants = await Promise.all(promises);
+        await InteractionUtils.send(currInteraction, loadingEmbed);
 
         //normalized and modified for each candidate
         const scores = ElectionUtils.getScores(participants);
 
-        const election = await electionRepo.getById(electionId);
-
         const results = ElectionUtils.getResults(election, scores);
-        await ElectionUtils.saveResults(electionId, results);
+        await ElectionUtils.saveResults(election.id, results);
 
         const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
 
@@ -198,7 +230,7 @@ export class ElectionCommand implements Command {
             },
         });
 
-        await InteractionUtils.send(buttonIntr, {
+        await InteractionUtils.editReply(currInteraction, {
             embeds: [resultsEmbed],
             files: [image],
         });

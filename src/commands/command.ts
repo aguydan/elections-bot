@@ -7,9 +7,9 @@ import {
 
 export interface Command {
     names: string[];
-    execute(intr: CommandInteraction): Promise<void>;
+    execute(interaction: CommandInteraction): Promise<void>;
     autocomplete?(
-        intr: AutocompleteInteraction,
+        interaction: AutocompleteInteraction,
         option: AutocompleteFocusedOption
     ): Promise<ApplicationCommandOptionChoiceData[]>;
 }

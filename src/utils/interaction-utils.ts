@@ -25,7 +25,7 @@ const IGNORED_ERRORS = [
 
 export class InteractionUtils {
     public static async send(
-        intr: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
+        interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
         content: string | EmbedBuilder | InteractionReplyOptions,
         hidden: boolean = false
     ): Promise<Message | undefined> {
@@ -34,16 +34,16 @@ export class InteractionUtils {
                 typeof content === 'string'
                     ? { content }
                     : content instanceof EmbedBuilder
-                    ? { embeds: [content] }
-                    : content;
+                      ? { embeds: [content] }
+                      : content;
 
-            if (intr.deferred || intr.replied) {
-                return await intr.followUp({
+            if (interaction.deferred || interaction.replied) {
+                return await interaction.followUp({
                     ...options,
                     ephemeral: hidden,
                 });
             } else {
-                return await intr.reply({
+                return await interaction.reply({
                     ...options,
                     ephemeral: hidden,
                     fetchReply: true,
@@ -63,11 +63,11 @@ export class InteractionUtils {
     }
 
     public static async respond(
-        intr: AutocompleteInteraction,
+        interaction: AutocompleteInteraction,
         choices: ApplicationCommandOptionChoiceData[] = []
     ): Promise<void> {
         try {
-            return await intr.respond(choices);
+            return await interaction.respond(choices);
         } catch (error) {
             if (
                 error instanceof DiscordAPIError &&
@@ -82,7 +82,7 @@ export class InteractionUtils {
     }
 
     public static async editReply(
-        intr: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
+        interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
         content: string | EmbedBuilder | WebhookMessageEditOptions
     ): Promise<Message | undefined> {
         try {
@@ -90,9 +90,9 @@ export class InteractionUtils {
                 typeof content === 'string'
                     ? { content }
                     : content instanceof EmbedBuilder
-                    ? { embeds: [content] }
-                    : content;
-            return await intr.editReply(options);
+                      ? { embeds: [content] }
+                      : content;
+            return await interaction.editReply(options);
         } catch (error) {
             if (
                 error instanceof DiscordAPIError &&

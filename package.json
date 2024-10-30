@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "build": "rimraf dist && npx swc src -d dist --strip-leading-paths",
-        "commands:register": "npm run build && node --enable-source-maps dist/start-bot.js commands register\"",
+        "commands:register": "npm run build && node --enable-source-maps dist/start-bot.js commands register",
         "dev": "concurrently \"npm run watch:swc\" \"npm run watch:nodemon\"",
         "start": "npm run start:bot",
         "start:bot": "npm run build && node --enable-source-maps dist/start-bot.js",

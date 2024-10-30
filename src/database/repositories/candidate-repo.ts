@@ -1,8 +1,10 @@
 import { Repo } from './index.js';
 import { Kysely } from 'kysely';
 import { Candidate, CandidateUpdate, Database, NewCandidate } from '../schema/index.js';
+import { CandidateScore } from '../schema/candidate.js';
 
 export class CandidateRepo implements Repo {
+    //check id function??
     constructor(private readonly db: Kysely<Database>) {}
 
     public async getAll(): Promise<Candidate[]> {
@@ -27,6 +29,14 @@ export class CandidateRepo implements Repo {
         return candidate;
     }
 
+    public async searchByName(name: string): Promise<Pick<Candidate, 'id' | 'name'>[]> {
+        return await this.db
+            .selectFrom('candidate')
+            .select(['id', 'name'])
+            .where('name', '~*', `.*${name}.*`)
+            .execute();
+    }
+
     public async create(data: NewCandidate): Promise<number> {
         const result = await this.db.insertInto('candidate').values(data).executeTakeFirst();
 
@@ -41,6 +51,18 @@ export class CandidateRepo implements Repo {
         const result = await this.db
             .updateTable('candidate')
             .set(data)
+            .where('id', '=', id)
+            .executeTakeFirst();
+
+        return Number(result.numUpdatedRows);
+    }
+
+    public async updateScore(id: number, score: CandidateScore): Promise<number> {
+        const result = await this.db
+            .updateTable('candidate')
+            .set({
+                score: JSON.stringify(score),
+            })
             .where('id', '=', id)
             .executeTakeFirst();
 

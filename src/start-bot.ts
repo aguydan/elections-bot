@@ -4,7 +4,7 @@ import { CommandRegistrationService } from './services/index.js';
 import { Bot } from './models/bot.js';
 import { ChatCommandMetadata, Command } from './commands/index.js';
 import { CommandHandler } from './events/index.js';
-import { ElectionCommand } from './commands/chat/index.js';
+import { ElectionCommand, ScoreCommand } from './commands/chat/index.js';
 
 //по умолчанию загрузить json конфиг в es6 модуль нельзя,
 //но можно воспольщоваться commonjs функцией require, создав её es6 вариант
@@ -17,7 +17,7 @@ async function start(): Promise<void> {
         intents: Config.client.intents,
     });
 
-    const commands: Command[] = [new ElectionCommand()];
+    const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
 
     const commandHandler = new CommandHandler(commands);
 
