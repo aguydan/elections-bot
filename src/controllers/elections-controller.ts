@@ -7,7 +7,10 @@ export class ElectionsController implements Controller {
     public path = '/elections';
     public router: Router = PromiseRouter();
 
-    constructor(private electionResultsRouter: Router) {}
+    constructor(
+        private electionResultsRouter: Router,
+        private heldElectionsRouter: Router
+    ) {}
 
     public register(): void {
         this.router.get('/', (req, res) => this.getElections(req, res));
@@ -17,6 +20,7 @@ export class ElectionsController implements Controller {
         this.router.delete('/:electionId', (req, res) => this.deleteElection(req, res));
 
         this.router.use('/:electionId/results', this.electionResultsRouter);
+        this.router.use('/:electionId/held', this.heldElectionsRouter);
     }
 
     private async getElections(req: Request, res: Response): Promise<void> {

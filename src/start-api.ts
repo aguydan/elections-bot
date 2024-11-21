@@ -2,6 +2,7 @@ import {
     CandidatesController,
     ElectionResultsController,
     ElectionsController,
+    HeldElectionsController,
     RootController,
     UploadsController,
 } from './controllers/index.js';
@@ -11,14 +12,19 @@ async function start(): Promise<void> {
     const rootController = new RootController();
     const uploadsController = new UploadsController();
     const electionResultsController = new ElectionResultsController();
+    const heldElectionsController = new HeldElectionsController();
     const candidatesController = new CandidatesController(electionResultsController.router);
-    const electionsController = new ElectionsController(electionResultsController.router);
+    const electionsController = new ElectionsController(
+        electionResultsController.router,
+        heldElectionsController.router
+    );
     const api = new API([
         rootController,
         uploadsController,
         electionsController,
         candidatesController,
         electionResultsController,
+        heldElectionsController,
     ]);
 
     await api.start();

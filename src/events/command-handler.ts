@@ -11,20 +11,21 @@ import { CommandUtils, InteractionUtils } from '@/utils/index.js';
 export class CommandHandler implements EventHandler {
     constructor(private commands: Command[]) {}
 
-    public async process(intr: CommandInteraction | AutocompleteInteraction): Promise<void> {
+    public async process(interaction: CommandInteraction | AutocompleteInteraction): Promise<void> {
         //Don't respond to self or other bots
-        if (intr.user.id === intr.client.user.id || intr.user.bot) {
+        if (interaction.user.id === interaction.client.user.id || interaction.user.bot) {
             return;
         }
 
         const commandParts =
-            intr instanceof ChatInputCommandInteraction || intr instanceof AutocompleteInteraction
+            interaction instanceof ChatInputCommandInteraction ||
+            interaction instanceof AutocompleteInteraction
                 ? ([
-                      intr.commandName,
-                      intr.options.getSubcommandGroup(false),
-                      intr.options.getSubcommand(false),
+                      interaction.commandName,
+                      interaction.options.getSubcommandGroup(false),
+                      interaction.options.getSubcommand(false),
                   ].filter(Boolean) as string[])
-                : [intr.commandName];
+                : [interaction.commandName];
         const commandName = commandParts.join(' ');
 
         const command = CommandUtils.findCommand(this.commands, commandParts);
@@ -34,16 +35,16 @@ export class CommandHandler implements EventHandler {
             return;
         }
 
-        if (intr instanceof AutocompleteInteraction) {
+        if (interaction instanceof AutocompleteInteraction) {
             if (!command.autocomplete) {
                 console.log('autocomplete not found');
                 return;
             }
 
             try {
-                const option = intr.options.getFocused(true);
-                const choices = await command.autocomplete(intr, option);
-                InteractionUtils.respond(intr, choices?.slice(0, 25));
+                const option = interaction.options.getFocused(true);
+                const choices = await command.autocomplete(interaction, option);
+                InteractionUtils.respond(interaction, choices?.slice(0, 25));
             } catch (error) {
                 console.log(error);
             }
@@ -57,7 +58,7 @@ export class CommandHandler implements EventHandler {
         //get data from database if needed to record the interaction for example
 
         try {
-            await command.execute(intr);
+            await command.execute(interaction);
         } catch (error) {
             console.log(error);
 
@@ -72,7 +73,7 @@ export class CommandHandler implements EventHandler {
                 },
             });
 
-            InteractionUtils.send(intr, errorEmbed);
+            InteractionUtils.send(interaction, errorEmbed);
         }
     }
 }

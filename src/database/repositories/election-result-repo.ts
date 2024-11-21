@@ -13,17 +13,8 @@ export class ElectionResultRepo implements Repo {
         const result = await this.db
             .selectFrom('election_result as r')
             .leftJoin('candidate as c', 'r.candidate_id', 'c.id')
-            .leftJoin('election as e', 'r.election_id', 'e.id')
             .selectAll('r')
-            .select([
-                'e.type',
-                'e.country',
-                'e.name as election_name',
-                'e.date',
-                'c.name as candidate_name',
-                'c.color',
-                'c.party',
-            ])
+            .select(['c.name as candidate_name', 'c.color', 'c.party', 'c.image_url'])
             .where('id', '=', id)
             .executeTakeFirst();
 
@@ -38,17 +29,8 @@ export class ElectionResultRepo implements Repo {
         return await this.db
             .selectFrom('election_result as r')
             .leftJoin('candidate as c', 'r.candidate_id', 'c.id')
-            .leftJoin('election as e', 'r.election_id', 'e.id')
             .selectAll('r')
-            .select([
-                'e.type',
-                'e.country',
-                'e.name as election_name',
-                'e.date',
-                'c.name as candidate_name',
-                'c.color',
-                'c.party',
-            ])
+            .select(['c.name as candidate_name', 'c.color', 'c.party', 'c.image_url'])
             .where(eb => eb.and(params))
             .execute();
     }

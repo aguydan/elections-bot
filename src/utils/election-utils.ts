@@ -1,4 +1,4 @@
-import { electionResultRepo } from '@/database/database.js';
+import { electionResultRepo, heldElectionRepo } from '@/database/database.js';
 import { Candidate, Election } from '@/database/schema/index.js';
 import { createRequire } from 'module';
 
@@ -99,6 +99,15 @@ export class ElectionUtils {
     }
 
     public static async saveResults(electionId: number, results: Results): Promise<void> {
+        const heldElectionId = await heldElectionRepo.create({
+            created_at: new Date(),
+            election_id: electionId,
+        });
+
+        if (!heldElectionId) {
+            throw new Error('Held election failed to record to database');
+        }
+
         for (const [id, fields] of Object.entries(results)) {
             const { popularVote, percentage } = fields;
 
@@ -107,7 +116,7 @@ export class ElectionUtils {
                 popular_vote: popularVote,
                 created_at: new Date(),
                 candidate_id: parseInt(id),
-                election_id: electionId,
+                held_election_id: heldElectionId,
             });
         }
     }
