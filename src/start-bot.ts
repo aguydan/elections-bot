@@ -3,8 +3,9 @@ import { createRequire } from 'node:module';
 import { CommandRegistrationService } from './services/index.js';
 import { Bot } from './models/bot.js';
 import { ChatCommandMetadata, Command } from './commands/index.js';
-import { CommandHandler } from './events/index.js';
+import { CommandHandler, MessageHandler, SelectMenuHandler } from './events/index.js';
 import { ElectionCommand, ScoreCommand } from './commands/chat/index.js';
+import { ElectionMetadata } from './models/election-metadata.js';
 
 //по умолчанию загрузить json конфиг в es6 модуль нельзя,
 //но можно воспольщоваться commonjs функцией require, создав её es6 вариант
@@ -19,9 +20,19 @@ async function start(): Promise<void> {
 
     const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
 
-    const commandHandler = new CommandHandler(commands);
+    const electionMetadata: ElectionMetadata = {};
 
-    const bot = new Bot(Config.client.token, client, commandHandler);
+    const commandHandler = new CommandHandler(commands, electionMetadata);
+    const messageHandler = new MessageHandler();
+    const selectMenuHandler = new SelectMenuHandler(electionMetadata);
+
+    const bot = new Bot(
+        Config.client.token,
+        client,
+        commandHandler,
+        messageHandler,
+        selectMenuHandler
+    );
 
     if (process.argv[2] === 'commands') {
         try {

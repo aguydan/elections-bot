@@ -6,133 +6,178 @@ import {
     ChatInputCommandInteraction,
     ComponentType,
     EmbedBuilder,
-    StringSelectMenuBuilder,
     StringSelectMenuInteraction,
 } from 'discord.js';
 import { Command } from '../index.js';
 import { InteractionUtils } from '@/utils/index.js';
-import { candidateRepo, electionRepo } from '@/database/database.js';
 import { FRONTEND_PATH } from '@/constants/frontend.js';
 import { ElectionUtils } from '@/utils/election-utils.js';
 import { FrontendUtils } from '@/utils/frontend-utils.js';
+import { CandidatesMenuFactory, ElectionsMenuFactory } from '@/models/menu-factory.js';
+import { electionRepo } from '@/database/database.js';
+import { ElectionMetadata } from '@/models/election-metadata.js';
+import { CollectorManager } from '@/models/collector-manager.js';
+import { CollectorUtils } from '@/utils/collector-utils.js';
 
 //probably also need to encapsulate creating menus and buttons or just put them in different place
 //this all needs error handling, probably externally
-//move EMBEDS elsewhere!!!!
 
 export class ElectionCommand implements Command {
     public names = ['election'];
 
-    public async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        let prevInteraction: ChatInputCommandInteraction | StringSelectMenuInteraction =
-            interaction;
-        let currInteraction;
+    public async execute(
+        prevInteraction: ChatInputCommandInteraction,
+        electionMetadata: ElectionMetadata
+    ): Promise<void> {
+        const metadataId = crypto.randomUUID();
 
         const elections = await electionRepo.getAll();
-
-        const electionsButton = new ActionRowBuilder<ButtonBuilder>({
-            components: [
-                new ButtonBuilder({
-                    label: 'Create election',
-                    url: `${FRONTEND_PATH}/elections/create`,
-                    style: ButtonStyle.Link,
-                }),
-            ],
-        });
-
-        const electionsMenuId = crypto.randomUUID();
-
-        const electionsMenu = new ActionRowBuilder<StringSelectMenuBuilder>({
-            components: [
-                new StringSelectMenuBuilder({
-                    custom_id: electionsMenuId, //probably should be random so that every command sequence is indeoendent
-                    placeholder: 'Choose from the existing',
-                    options: elections.map(election => {
-                        return {
-                            value: election.id.toString(),
-                            label: election.name,
-                        };
-                    }),
-                }),
-            ],
-        });
+        const electionsMenuFactory = new ElectionsMenuFactory();
+        const electionsMenu = electionsMenuFactory.createMenu(elections, metadataId);
+        const electionsButton = electionsMenuFactory.createLinkButton(
+            `${FRONTEND_PATH}/elections/create`
+        );
 
         await InteractionUtils.send(prevInteraction, {
             content: '👑 Create a new election preset or choose an existing one.',
-            components: [electionsButton, electionsMenu],
+            components: [electionsButton, electionsMenu.menu],
         });
 
-        currInteraction = await prevInteraction.channel?.awaitMessageComponent({
-            filter: interaction => interaction.customId === electionsMenuId,
+        const { channel } = prevInteraction;
+        if (!channel) throw new Error("Channel doesn't exist'");
+
+        const dashCommandCollector = CollectorUtils.createDashCommandCollector(
+            channel,
+            '-cancel',
+            async () => {
+                delete electionMetadata[metadataId];
+
+                await InteractionUtils.editReply(prevInteraction, {
+                    content: 'COMMAND CANCELLED',
+                    components: [],
+                });
+            }
+        );
+
+        const menuCollector = CollectorUtils.createMenuCollector(
+            prevInteraction,
+            electionsMenu.id,
+            async interaction => {
+                const election = elections.find(
+                    election => election.id == Number(interaction.values[0]!)
+                )!;
+
+                electionMetadata[metadataId] = { election };
+
+                const electionEmbed = new EmbedBuilder({
+                    title: election.name,
+                    description:
+                        'The election will take place in the country of ' +
+                        election.country +
+                        ' on ' +
+                        election.date,
+                    timestamp: new Date().toISOString(),
+                    footer: {
+                        text: 'Central Election Commitee',
+                    },
+                });
+
+                await InteractionUtils.editReply(prevInteraction, {
+                    content: null,
+                    components: [],
+                    embeds: [electionEmbed],
+                });
+            }
+        );
+
+        new CollectorManager([dashCommandCollector, menuCollector]).init();
+
+        /*         const messageCollector = channel.createMessageCollector({
+            filter: message => message.content.startsWith('-cancel'),
+            time: 120_000,
+        });
+
+        const componentCollector = channel.createMessageComponentCollector({
+            filter: interaction => interaction.customId === electionsMenu.id,
             componentType: ComponentType.StringSelect,
-            time: 120000,
+            time: 120_000,
         });
 
-        if (!currInteraction?.values.length) {
-            console.log('no election id received');
-            return;
-        }
+        messageCollector.on('collect', async () => {
+            messageCollector.stop();
+            componentCollector.stop();
+            console.log('both collectors stopped');
 
-        const election = await electionRepo.getById(parseInt(currInteraction.values[0]!));
+            delete electionMetadata[metadataId];
 
-        const electionEmbed = new EmbedBuilder({
-            title: election.name,
-            description:
-                'The election will take place in the country of ' +
-                election.country +
-                ' on ' +
-                election.date,
-            timestamp: new Date().toISOString(),
-            footer: {
-                text: 'Central Election Commitee',
-            },
+            await InteractionUtils.editReply(prevInteraction, {
+                content: 'COMMAND CANCELLED',
+                components: [],
+            });
         });
 
-        await InteractionUtils.editReply(prevInteraction, {
-            content: null,
-            components: [],
-            embeds: [electionEmbed],
+        componentCollector.on('collect', async interaction => {
+            messageCollector.stop();
+            componentCollector.stop();
+
+            const election = elections.find(
+                election => election.id == Number(interaction.values[0]!)
+            )!;
+
+            //don't forget to delete data on cancelling and on finishing election sequence
+            electionMetadata[metadataId] = { election };
+            console.log(electionMetadata);
+
+            //encapsulate embeds
+            const electionEmbed = new EmbedBuilder({
+                title: election.name,
+                description:
+                    'The election will take place in the country of ' +
+                    election.country +
+                    ' on ' +
+                    election.date,
+                timestamp: new Date().toISOString(),
+                footer: {
+                    text: 'Central Election Commitee',
+                },
+            });
+
+            await InteractionUtils.editReply(prevInteraction, {
+                content: null,
+                components: [],
+                embeds: [electionEmbed],
+            });
+
+            console.log('both collectors stopped');
         });
 
+        //we don't need these two
+        messageCollector.on('end', () => {
+            console.log('Message collector ended');
+        });
+
+        componentCollector.on('end', () => {
+            console.log('Component collector ended');
+        }); */
+
+        /*
+        const candidatesMenuFactory = new CandidatesMenuFactory();
         const candidates = await candidateRepo.getAll();
-
-        const candidatesButton = new ActionRowBuilder<ButtonBuilder>({
-            components: [
-                new ButtonBuilder({
-                    label: 'Create candidate',
-                    url: `${FRONTEND_PATH}/candidates/create`,
-                    style: ButtonStyle.Link,
-                }),
-            ],
-        });
-
-        const candidatesMenu = new ActionRowBuilder<StringSelectMenuBuilder>({
-            components: [
-                new StringSelectMenuBuilder({
-                    custom_id: 'candidatesMenu',
-                    placeholder: 'Choose from the existing',
-                    options: candidates.map(candidate => {
-                        return {
-                            value: candidate.id.toString(),
-                            label: candidate.name,
-                        };
-                    }),
-                    min_values: 2,
-                    max_values: candidates.length,
-                }),
-            ],
-        });
+        const candidatesMenu = candidatesMenuFactory.createMenu(candidates);
+        const candidatesButton = candidatesMenuFactory.createLinkButton(
+            `${FRONTEND_PATH}/candidates/create`
+        );
 
         await InteractionUtils.send(currInteraction, {
             content: 'Create a new candidate or choose at least 2 as participants in the election.',
-            components: [candidatesButton, candidatesMenu],
+            components: [candidatesButton, candidatesMenu.menu],
         });
 
-        //we make the current interaction to be the old interaction after every reply to current interaction
+        //we make the current prevInteraction to be the old interaction after every reply to current interaction
         prevInteraction = currInteraction;
 
         currInteraction = await prevInteraction.channel?.awaitMessageComponent({
-            filter: interaction => interaction.customId === 'candidatesMenu',
+            filter: prevInteraction => interaction.customId === candidatesMenu.id,
             componentType: ComponentType.StringSelect,
             time: 120000,
         });
@@ -183,7 +228,7 @@ export class ElectionCommand implements Command {
 
         //Hold election sequence
         currInteraction = await prevInteraction.channel?.awaitMessageComponent({
-            filter: interaction => interaction.customId === 'holdElectionButton',
+            filter: prevInteraction => interaction.customId === 'holdElectionButton',
             componentType: ComponentType.Button,
             time: 120000,
         });
@@ -213,7 +258,7 @@ export class ElectionCommand implements Command {
         const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
 
         if (!buffer) {
-            //create new interaction with embed for this error
+            //create new prevInteraction with embed for this error
             throw new Error('something about suspicions voting results');
         }
         const image = new AttachmentBuilder(buffer, { name: 'results.jpg' });
@@ -233,6 +278,6 @@ export class ElectionCommand implements Command {
         await InteractionUtils.editReply(currInteraction, {
             embeds: [resultsEmbed],
             files: [image],
-        });
+        }); */
     }
 }

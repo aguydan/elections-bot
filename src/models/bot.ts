@@ -1,10 +1,12 @@
-import { CommandHandler } from '@/events/index.js';
+import { CommandHandler, MessageHandler, SelectMenuHandler } from '@/events/index.js';
 import {
     AutocompleteInteraction,
     Client,
     CommandInteraction,
     Events,
     Interaction,
+    Message,
+    StringSelectMenuInteraction,
 } from 'discord.js';
 
 export class Bot {
@@ -13,7 +15,9 @@ export class Bot {
     constructor(
         private token: string,
         private client: Client,
-        private commandHandler: CommandHandler
+        private commandHandler: CommandHandler,
+        private messageHandler: MessageHandler,
+        private selectMenuHandler: SelectMenuHandler
     ) {}
 
     public async start(): Promise<void> {
@@ -24,6 +28,7 @@ export class Bot {
     private registerListeners(): void {
         this.client.on(Events.ClientReady, () => this.onReady());
         this.client.on(Events.InteractionCreate, (intr: Interaction) => this.onInteraction(intr));
+        this.client.on(Events.MessageCreate, (message: Message) => this.onMessage(message));
     }
 
     private async login(token: string): Promise<void> {
@@ -51,6 +56,24 @@ export class Bot {
             } catch (error) {
                 console.log(error);
             }
+        }
+
+        if (intr instanceof StringSelectMenuInteraction) {
+            try {
+                await this.selectMenuHandler.process(intr);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
+
+    private async onMessage(message: Message): Promise<void> {
+        if (!this.ready) return;
+
+        try {
+            await this.messageHandler.process(message);
+        } catch (error) {
+            console.log(error);
         }
     }
 }

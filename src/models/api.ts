@@ -4,6 +4,7 @@ import express, { Express } from 'express';
 import { createRequire } from 'node:module';
 import util from 'node:util';
 import cors from 'cors';
+import { FRONTEND_PATH } from '@/constants/frontend.js';
 
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');
@@ -13,7 +14,7 @@ export class API {
 
     constructor(public controllers: Controller[]) {
         this.app = express();
-        this.app.use(cors({ origin: 'http://localhost:3000' }));
+        this.app.use(cors({ origin: FRONTEND_PATH }));
         this.app.use(express.json());
         this.app.use(express.static('public'));
         this.setupControllers();

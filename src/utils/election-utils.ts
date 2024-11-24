@@ -8,6 +8,7 @@ const Config = require('../../config/config.json');
 type Scores = Record<number, number>;
 type Results = Record<number, { popularVote: number; percentage: number }>;
 
+//builder pattern???
 export class ElectionUtils {
     public static getScores(participants: Candidate[]): Scores {
         const scores: Scores = {};
