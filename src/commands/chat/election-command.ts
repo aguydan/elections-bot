@@ -1,46 +1,30 @@
-import {
-    ActionRowBuilder,
-    AttachmentBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    ChatInputCommandInteraction,
-    ComponentType,
-    EmbedBuilder,
-    StringSelectMenuInteraction,
-} from 'discord.js';
+import { ChatInputCommandInteraction, ComponentType, EmbedBuilder } from 'discord.js';
 import { Command } from '../index.js';
 import { InteractionUtils } from '@/utils/index.js';
 import { FRONTEND_PATH } from '@/constants/frontend.js';
-import { ElectionUtils } from '@/utils/election-utils.js';
-import { FrontendUtils } from '@/utils/frontend-utils.js';
 import { CandidatesMenuFactory, ElectionsMenuFactory } from '@/models/menu-factory.js';
 import { electionRepo } from '@/database/database.js';
 import { ElectionMetadata } from '@/models/election-metadata.js';
 import { CollectorManager } from '@/models/collector-manager.js';
 import { CollectorUtils } from '@/utils/collector-utils.js';
 
-//probably also need to encapsulate creating menus and buttons or just put them in different place
-//this all needs error handling, probably externally
-
 export class ElectionCommand implements Command {
     public names = ['election'];
 
     public async execute(
         prevInteraction: ChatInputCommandInteraction,
-        electionMetadata: ElectionMetadata
+        metadata: ElectionMetadata
     ): Promise<void> {
         const metadataId = crypto.randomUUID();
 
         const elections = await electionRepo.getAll();
-        const electionsMenuFactory = new ElectionsMenuFactory();
-        const electionsMenu = electionsMenuFactory.createMenu(elections, metadataId);
-        const electionsButton = electionsMenuFactory.createLinkButton(
-            `${FRONTEND_PATH}/elections/create`
-        );
+        const menuFactory = new ElectionsMenuFactory();
+        const menu = menuFactory.createMenu(elections, metadataId);
+        const button = menuFactory.createLinkButton(`${FRONTEND_PATH}/elections/create`);
 
         await InteractionUtils.send(prevInteraction, {
             content: '👑 Create a new election preset or choose an existing one.',
-            components: [electionsButton, electionsMenu.menu],
+            components: [button, menu.menu],
         });
 
         const { channel } = prevInteraction;
@@ -50,7 +34,9 @@ export class ElectionCommand implements Command {
             channel,
             '-cancel',
             async () => {
-                delete electionMetadata[metadataId];
+                delete metadata[metadataId];
+
+                console.log('election command handler, interaction id: ' + prevInteraction.id);
 
                 await InteractionUtils.editReply(prevInteraction, {
                     content: 'COMMAND CANCELLED',
@@ -59,15 +45,16 @@ export class ElectionCommand implements Command {
             }
         );
 
-        const menuCollector = CollectorUtils.createMenuCollector(
+        const menuCollector = CollectorUtils.createComponentCollector(
             prevInteraction,
-            electionsMenu.id,
+            menu.id,
+            ComponentType.StringSelect,
             async interaction => {
                 const election = elections.find(
                     election => election.id == Number(interaction.values[0]!)
                 )!;
 
-                electionMetadata[metadataId] = { election };
+                metadata[metadataId] = { election, participants: null };
 
                 const electionEmbed = new EmbedBuilder({
                     title: election.name,
@@ -90,7 +77,9 @@ export class ElectionCommand implements Command {
             }
         );
 
-        new CollectorManager([dashCommandCollector, menuCollector]).init();
+        const manager = new CollectorManager();
+        manager.init(dashCommandCollector);
+        manager.init(menuCollector);
 
         /*         const messageCollector = channel.createMessageCollector({
             filter: message => message.content.startsWith('-cancel'),
@@ -98,7 +87,7 @@ export class ElectionCommand implements Command {
         });
 
         const componentCollector = channel.createMessageComponentCollector({
-            filter: interaction => interaction.customId === electionsMenu.id,
+            filter: interaction => interaction.customId === menu.id,
             componentType: ComponentType.StringSelect,
             time: 120_000,
         });
@@ -108,7 +97,7 @@ export class ElectionCommand implements Command {
             componentCollector.stop();
             console.log('both collectors stopped');
 
-            delete electionMetadata[metadataId];
+            delete metadata[metadataId];
 
             await InteractionUtils.editReply(prevInteraction, {
                 content: 'COMMAND CANCELLED',
@@ -125,8 +114,8 @@ export class ElectionCommand implements Command {
             )!;
 
             //don't forget to delete data on cancelling and on finishing election sequence
-            electionMetadata[metadataId] = { election };
-            console.log(electionMetadata);
+            metadata[metadataId] = { election };
+            console.log(metadata);
 
             //encapsulate embeds
             const electionEmbed = new EmbedBuilder({

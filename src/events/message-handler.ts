@@ -7,10 +7,6 @@ export class MessageHandler implements EventHandler {
             return;
         }
 
-        if (message.content.startsWith('-cancel')) {
-            message.channel.send('we will cancel all commands now!!!');
-        }
-
         console.log('sends message: ', message.content);
     }
 }
