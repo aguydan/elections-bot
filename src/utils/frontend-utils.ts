@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
 
 export class FrontendUtils {
-    public static async getResultsScreenshot(path: string): Promise<Buffer | null> {
+    public static async getResultsScreenshot(path: string): Promise<Buffer> {
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
 
@@ -17,9 +17,7 @@ export class FrontendUtils {
             return Buffer.from(screenshot);
         } catch (error) {
             //in case the frontend is not available
-            console.log(error);
-
-            return null;
+            throw error;
         }
     }
 }

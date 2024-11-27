@@ -8,25 +8,41 @@ const Config = require('../../config/config.json');
 type Scores = Record<number, number>;
 type Results = Record<number, { popularVote: number; percentage: number }>;
 
-//builder pattern???
-export class ElectionUtils {
-    public static getScores(participants: Candidate[]): Scores {
+export class ElectionResultsBuilder {
+    public scores: Scores | null;
+    public results: Results | null;
+
+    constructor() {
+        this.scores = null;
+        this.results = null;
+    }
+
+    private getSum(this: this & { scores: Scores }) {
+        return Object.values(this.scores).reduce((acc, score) => acc + score, 0);
+    }
+
+    private getSorted(this: this & { scores: Scores }) {
+        return Object.entries(this.scores).sort((a, b) => b[1] - a[1]);
+    }
+
+    public getTotalForEach(participants: Candidate[]) {
         const scores: Scores = {};
 
-        //compute scores
-
         for (const participant of participants) {
-            const totalScore = Object.entries(participant.score).reduce(
-                (acc, entry) => acc + entry[1] * Config.candidateScoreWeights[entry[0]],
-                0
-            );
+            const totalScore = Object.entries(participant.score).reduce((acc, entry) => {
+                const [label, value] = entry;
+
+                return acc + value * Config.candidateScoreWeights[label];
+            }, 0);
 
             scores[participant.id] = totalScore;
         }
 
-        //randomize scores
+        return Object.assign(this, { scores });
+    }
 
-        for (const [id, score] of Object.entries(scores)) {
+    public randomize(this: this & { scores: Scores }) {
+        for (const [id, score] of Object.entries(this.scores)) {
             const random = Math.random();
             let modified = score;
 
@@ -42,25 +58,24 @@ export class ElectionUtils {
                 modified -= 0.07 * score;
             }
 
-            console.log(random);
+            console.log(random); //delete log
 
-            scores[parseInt(id)] = modified;
+            this.scores[parseInt(id)] = modified;
         }
 
-        const sumOfScores = Object.values(scores).reduce((acc, score) => acc + score, 0);
-
-        //normalize scores
-
-        for (const [id, score] of Object.entries(scores)) {
-            scores[parseInt(id)] = score / sumOfScores;
-        }
-
-        console.log(scores);
-        return scores;
+        return this;
     }
 
-    //split getting results and percentages
-    public static getResults(election: Election, scores: Scores): Results {
+    public normalize(this: this & { scores: Scores }) {
+        for (const [id, score] of Object.entries(this.scores)) {
+            this.scores[parseInt(id)] = score / this.getSum();
+        }
+
+        console.log(this.scores);
+        return this;
+    }
+
+    public getResults(this: this & { scores: Scores }, election: Election) {
         const votingPool = election.turnout
             ? Math.round(election.electorate * (election.turnout / 100))
             : Math.round(election.electorate * Math.random());
@@ -69,13 +84,12 @@ export class ElectionUtils {
             throw new Error('elections cannot proceed because no one showed up');
         }
 
-        const results: Results = {};
         let hasFreeVotes = true;
         let freeVotes = votingPool;
 
-        const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        const results: Results = {};
 
-        for (const [id, score] of sortedScores) {
+        for (const [id, score] of this.getSorted()) {
             // ADDRESSED:
             // if votingPool is 1 and score for every candidate is less than 0.5 then everyone will get 0 votes
             let votes = hasFreeVotes ? Math.round(votingPool * score) : 0;
@@ -94,12 +108,12 @@ export class ElectionUtils {
 
             results[parseInt(id)] = { popularVote: votes, percentage };
         }
-
         console.log(results);
-        return results;
+
+        return Object.assign(this, { results });
     }
 
-    public static async saveResults(electionId: number, results: Results): Promise<void> {
+    public async save(this: this & { results: Results }, electionId: number) {
         const heldElectionId = await heldElectionRepo.create({
             created_at: new Date(),
             election_id: electionId,
@@ -109,9 +123,10 @@ export class ElectionUtils {
             throw new Error('Held election failed to record to database');
         }
 
-        for (const [id, fields] of Object.entries(results)) {
+        for (const [id, fields] of Object.entries(this.results)) {
             const { popularVote, percentage } = fields;
 
+            //Promise all!!!
             await electionResultRepo.create({
                 percentage: percentage,
                 popular_vote: popularVote,
@@ -120,5 +135,7 @@ export class ElectionUtils {
                 held_election_id: heldElectionId,
             });
         }
+
+        return this.results;
     }
 }

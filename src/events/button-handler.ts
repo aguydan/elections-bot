@@ -2,9 +2,9 @@ import { AttachmentBuilder, ButtonInteraction, EmbedBuilder } from 'discord.js';
 import { EventHandler } from './index.js';
 import { ElectionMetadata } from '@/models/election-metadata';
 import { InteractionUtils } from '@/utils/interaction-utils.js';
-import { ElectionUtils } from '@/utils/election-utils.js';
 import { FrontendUtils } from '@/utils/frontend-utils.js';
 import { FRONTEND_PATH } from '@/constants/frontend.js';
+import { ElectionResultsBuilder } from '@/models/election-results-builder.js';
 
 export class ButtonHandler implements EventHandler {
     public async process(
@@ -47,18 +47,14 @@ export class ButtonHandler implements EventHandler {
                 return;
             }
 
-            //normalized and modified for each candidate
-            const scores = ElectionUtils.getScores(participants);
-
-            const results = ElectionUtils.getResults(election, scores);
-            await ElectionUtils.saveResults(election.id, results);
+            const results = await new ElectionResultsBuilder()
+                .getTotalForEach(participants)
+                .randomize()
+                .normalize()
+                .getResults(election)
+                .save(election.id);
 
             const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
-
-            if (!buffer) {
-                //create new prevInteraction with embed for this error
-                throw new Error('something about suspicions voting results');
-            }
             const image = new AttachmentBuilder(buffer, { name: 'results.jpg' });
 
             const resultsEmbed = new EmbedBuilder({
