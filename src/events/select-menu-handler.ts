@@ -16,9 +16,10 @@ import { CollectorManager } from '@/models/collector-manager.js';
 import { CollectorUtils } from '@/utils/collector-utils.js';
 
 export class SelectMenuHandler implements EventHandler {
-    constructor(private metadata: ElectionMetadata) {}
-
-    public async process(prevInteraction: StringSelectMenuInteraction): Promise<void> {
+    public async process(
+        prevInteraction: StringSelectMenuInteraction,
+        metadata: ElectionMetadata
+    ): Promise<void> {
         if (
             prevInteraction.user.id === prevInteraction.client.user.id ||
             prevInteraction.user.bot
@@ -47,7 +48,7 @@ export class SelectMenuHandler implements EventHandler {
                 channel,
                 '-cancel',
                 async () => {
-                    delete this.metadata[metadataId];
+                    delete metadata[metadataId];
 
                     await InteractionUtils.editReply(prevInteraction, {
                         content: 'COMMAND CANCELLED',
@@ -65,17 +66,17 @@ export class SelectMenuHandler implements EventHandler {
                         interaction.values.includes(candidate.id.toString())
                     )!;
 
-                    //to a different function
-                    const data = this.metadata[metadataId];
+                    //to a different function??
+                    const data = metadata[metadataId];
 
                     if (!data) {
-                        this.metadata[metadataId] = { participants, election: null };
+                        metadata[metadataId] = { participants, election: null };
                     } else {
                         data.participants = participants;
-                        this.metadata[metadataId] = data;
+                        metadata[metadataId] = data;
                     }
 
-                    console.log(this.metadata);
+                    console.log(metadata);
 
                     const participantsEmbed = new EmbedBuilder({
                         description: 'Hello' + participants,
@@ -123,7 +124,7 @@ export class SelectMenuHandler implements EventHandler {
                 channel,
                 '-cancel',
                 async () => {
-                    delete this.metadata[metadataId];
+                    delete metadata[metadataId];
 
                     await InteractionUtils.editReply(prevInteraction, {
                         content: 'COMMAND CANCELLED',

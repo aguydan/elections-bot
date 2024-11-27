@@ -1,6 +1,12 @@
-import { CommandHandler, MessageHandler, SelectMenuHandler } from '@/events/index.js';
+import {
+    ButtonHandler,
+    CommandHandler,
+    MessageHandler,
+    SelectMenuHandler,
+} from '@/events/index.js';
 import {
     AutocompleteInteraction,
+    ButtonInteraction,
     Client,
     CommandInteraction,
     Events,
@@ -8,6 +14,7 @@ import {
     Message,
     StringSelectMenuInteraction,
 } from 'discord.js';
+import { ElectionMetadata } from './election-metadata';
 
 export class Bot {
     private ready = false;
@@ -17,7 +24,9 @@ export class Bot {
         private client: Client,
         private commandHandler: CommandHandler,
         private messageHandler: MessageHandler,
-        private selectMenuHandler: SelectMenuHandler
+        private selectMenuHandler: SelectMenuHandler,
+        private buttonHandler: ButtonHandler,
+        private metadata: ElectionMetadata
     ) {}
 
     public async start(): Promise<void> {
@@ -50,9 +59,10 @@ export class Bot {
     private async onInteraction(intr: Interaction): Promise<void> {
         if (!this.ready) return;
 
+        //maybe switch statement?? maybe handlers as an argument since they all do one thing?
         if (intr instanceof CommandInteraction || intr instanceof AutocompleteInteraction) {
             try {
-                await this.commandHandler.process(intr);
+                await this.commandHandler.process(intr, this.metadata);
             } catch (error) {
                 console.log(error);
             }
@@ -60,7 +70,15 @@ export class Bot {
 
         if (intr instanceof StringSelectMenuInteraction) {
             try {
-                await this.selectMenuHandler.process(intr);
+                await this.selectMenuHandler.process(intr, this.metadata);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        if (intr instanceof ButtonInteraction) {
+            try {
+                await this.buttonHandler.process(intr, this.metadata);
             } catch (error) {
                 console.log(error);
             }

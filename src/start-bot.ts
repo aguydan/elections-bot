@@ -3,7 +3,12 @@ import { createRequire } from 'node:module';
 import { CommandRegistrationService } from './services/index.js';
 import { Bot } from './models/bot.js';
 import { ChatCommandMetadata, Command } from './commands/index.js';
-import { CommandHandler, MessageHandler, SelectMenuHandler } from './events/index.js';
+import {
+    ButtonHandler,
+    CommandHandler,
+    MessageHandler,
+    SelectMenuHandler,
+} from './events/index.js';
 import { ElectionCommand, ScoreCommand } from './commands/chat/index.js';
 import { ElectionMetadata } from './models/election-metadata.js';
 
@@ -22,16 +27,19 @@ async function start(): Promise<void> {
 
     const electionMetadata: ElectionMetadata = {};
 
-    const commandHandler = new CommandHandler(commands, electionMetadata);
+    const commandHandler = new CommandHandler(commands);
     const messageHandler = new MessageHandler();
-    const selectMenuHandler = new SelectMenuHandler(electionMetadata);
+    const selectMenuHandler = new SelectMenuHandler();
+    const buttonHandler = new ButtonHandler();
 
     const bot = new Bot(
         Config.client.token,
         client,
         commandHandler,
         messageHandler,
-        selectMenuHandler
+        selectMenuHandler,
+        buttonHandler,
+        electionMetadata
     );
 
     if (process.argv[2] === 'commands') {
