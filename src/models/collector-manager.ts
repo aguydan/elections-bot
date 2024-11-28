@@ -1,6 +1,6 @@
 import {
     CollectorWrapper,
-    ComponentTypeToInteractionType,
+    ComponentTypeToInteraction,
     SupportedComponentType,
     SupportedData,
 } from '@/utils/collector-utils.js';
@@ -17,8 +17,8 @@ export class CollectorManager {
     private messageCollectors: Collector<Snowflake, Message, [Collection<Snowflake, Message>]>[];
     private interactionCollectors: Collector<
         Snowflake,
-        ComponentTypeToInteractionType[SupportedComponentType],
-        [Collection<Snowflake, ComponentTypeToInteractionType[SupportedComponentType]>]
+        ComponentTypeToInteraction[SupportedComponentType],
+        [Collection<Snowflake, ComponentTypeToInteraction[SupportedComponentType]>]
     >[];
 
     constructor() {
@@ -36,8 +36,14 @@ export class CollectorManager {
 
         if (collector instanceof MessageCollector) {
             this.messageCollectors.push(collector);
-        } else if (collector instanceof InteractionCollector) {
+
+            return;
+        }
+
+        if (collector instanceof InteractionCollector) {
             this.interactionCollectors.push(collector);
+
+            return;
         }
     }
 
@@ -58,6 +64,9 @@ export class CollectorManager {
 
             collector.stop();
         }
+
         //delete collectors?
+        this.messageCollectors = [];
+        this.interactionCollectors = [];
     }
 }

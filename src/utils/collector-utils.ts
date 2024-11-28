@@ -1,3 +1,4 @@
+import { COLLECTOR_TIMER } from '@/constants/discord.js';
 import {
     BaseInteraction,
     ButtonInteraction,
@@ -25,7 +26,7 @@ export type SupportedComponentType =
     | ComponentType.ChannelSelect
     | ComponentType.Button;
 
-export type ComponentTypeToInteractionType = {
+export type ComponentTypeToInteraction = {
     [ComponentType.StringSelect]: StringSelectMenuInteraction;
     [ComponentType.UserSelect]: UserSelectMenuInteraction;
     [ComponentType.RoleSelect]: RoleSelectMenuInteraction;
@@ -34,7 +35,7 @@ export type ComponentTypeToInteractionType = {
     [ComponentType.Button]: ButtonInteraction;
 };
 
-export type SupportedData = Message | ComponentTypeToInteractionType[SupportedComponentType];
+export type SupportedData = Message | ComponentTypeToInteraction[SupportedComponentType];
 
 export type CollectorWrapper<T extends SupportedData> = {
     collector: Collector<Snowflake, T, [Collection<Snowflake, T>]>;
@@ -50,7 +51,7 @@ export class CollectorUtils {
         const collector = new MessageCollector(channel, {
             filter: message => message.content.startsWith(command),
             max: 1,
-            time: 120_000,
+            time: COLLECTOR_TIMER,
         });
 
         return { collector, onCollect: onCollect ?? (async () => {}) };
@@ -60,15 +61,15 @@ export class CollectorUtils {
         interaction: BaseInteraction,
         componentId: string,
         componentType: T,
-        onCollect?: (interaction: ComponentTypeToInteractionType[T]) => Promise<void>
-    ): CollectorWrapper<ComponentTypeToInteractionType[T]> {
-        const collector = new InteractionCollector<ComponentTypeToInteractionType[T]>(
+        onCollect?: (interaction: ComponentTypeToInteraction[T]) => Promise<void>
+    ): CollectorWrapper<ComponentTypeToInteraction[T]> {
+        const collector = new InteractionCollector<ComponentTypeToInteraction[T]>(
             interaction.client,
             {
                 filter: interaction => interaction.customId === componentId,
                 componentType,
                 max: 1,
-                time: 120_000,
+                time: COLLECTOR_TIMER,
             }
         );
 

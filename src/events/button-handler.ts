@@ -47,12 +47,14 @@ export class ButtonHandler implements EventHandler {
                 return;
             }
 
-            const results = await new ElectionResultsBuilder()
-                .getTotalForEach(participants)
-                .randomize()
-                .normalize()
-                .getResults(election)
-                .save(election.id);
+            const results = (
+                await new ElectionResultsBuilder()
+                    .getTotalScoresFor(participants)
+                    .randomize()
+                    .normalize()
+                    .getResults(election)
+                    .save(election.id)
+            ).results;
 
             const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
             const image = new AttachmentBuilder(buffer, { name: 'results.jpg' });
