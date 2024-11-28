@@ -110,7 +110,7 @@ export class ElectionResultsBuilder {
         let hasFreeVotes = true;
         let freeVotes = votingPool;
 
-        const results = structuredClone(this.results);
+        const results: Results<FullData> = {};
 
         for (const [id, data] of this.getSortedBy('score')) {
             const { score } = data;

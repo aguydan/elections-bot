@@ -1,0 +1,43 @@
+{
+    "client": {
+        "id": "",
+        "token": "",
+        "intents": ["Guilds", "GuildMessages", "GuildMembers", "MessageContent"]
+    },
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "postgres",
+        "password": "",
+        "database": "elections-bot"
+    },
+    "api": {
+        "protocol": "http",
+        "hostname": "localhost",
+        "port": 3001,
+        "staticDir": "public",
+        "uploadsDir": "uploads"
+    },
+    "frontend": {
+        "protocol": "http",
+        "hostname": "localhost",
+        "port": 3000
+    },
+    "guild": {
+        "id": ""
+    },
+    "candidateScoreWeights": {
+        "gdp": 0.1,
+        "party_relevance": 0.1,
+        "program_relevance": 0.1,
+        "charisma": 0.1,
+        "popularity": 0.1,
+        "landowners_support": 0.1,
+        "workers_support": 0.1,
+        "intelligentsia_support": 0.1,
+        "army_support": 0.1,
+        "devout_support": 0.1,
+        "capital_favorite": 0.1,
+        "propaganda_campaign": 0.1
+    }
+}
