@@ -52,11 +52,13 @@ export class ElectionResultsBuilder {
             results[participant.id] = { score: totalScore };
         }
 
+        console.log(results);
         return Object.assign(this, { results });
     }
 
     public randomize(this: this & { results: Results<DataWith<'score'>> }) {
-        const results = this.results;
+        //We need this cause otherwise the reference of this.results is copied into results instead of just contents => source of bugs
+        const results = structuredClone(this.results);
 
         for (const [id, data] of Object.entries(results)) {
             const { score } = data;
@@ -76,16 +78,15 @@ export class ElectionResultsBuilder {
                 modified -= 0.07 * score;
             }
 
-            console.log(random); //delete log
-
-            results[parseInt(id)] = { ...data, score };
+            results[parseInt(id)] = { ...data, score: modified };
         }
 
+        console.log(results);
         return Object.assign(this, { results });
     }
 
     public normalize(this: this & { results: Results<DataWith<'score'>> }) {
-        const results = this.results;
+        const results = structuredClone(this.results);
 
         for (const [id, data] of Object.entries(results)) {
             const { score } = data;
@@ -93,7 +94,7 @@ export class ElectionResultsBuilder {
             results[parseInt(id)] = { ...data, score: score / this.getSumOf('score') };
         }
 
-        console.log(this.results);
+        console.log(results);
         return Object.assign(this, { results });
     }
 
@@ -109,7 +110,7 @@ export class ElectionResultsBuilder {
         let hasFreeVotes = true;
         let freeVotes = votingPool;
 
-        const results: Results<FullData> = {};
+        const results = structuredClone(this.results);
 
         for (const [id, data] of this.getSortedBy('score')) {
             const { score } = data;
@@ -129,10 +130,10 @@ export class ElectionResultsBuilder {
 
             const percentage = (votes / votingPool) * 100;
 
-            results[parseInt(id)] = { popularVote: votes, percentage, score };
+            results[parseInt(id)] = { ...data, popularVote: votes, percentage };
         }
-        console.log(results);
 
+        console.log(results);
         return Object.assign(this, { results });
     }
 
