@@ -40,21 +40,23 @@ export class ButtonHandler implements EventHandler {
                 return;
             }
 
-            const { election, participants } = data;
+            const { election, candidates } = data;
 
-            if (!election || !participants) {
-                console.log('no election or participants provided');
+            if (!election || !candidates) {
+                console.log('no election or candidates provided');
                 return;
             }
 
             const results = (
                 await new ElectionResultsBuilder()
-                    .getTotalScoresFor(participants)
+                    .getTotalScoresFor(candidates)
                     .randomize()
                     .normalize()
                     .getResults(election)
                     .save(election.id)
             ).results;
+
+            delete metadata[metadataId];
 
             const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
             const image = new AttachmentBuilder(buffer, { name: 'results.jpg' });

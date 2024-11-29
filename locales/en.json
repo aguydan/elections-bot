@@ -1,0 +1,26 @@
+{
+	"election": {
+		"commission": "Conseil constitutionnel"
+	},
+    "menus": {
+        "placeholder": "List",
+        "linkButton": {
+            "label": "To Elections Bot website"
+        }
+    },
+	"embeds": {
+		"pickElection": {
+			"title": "CALL FOR ELECTION",
+			"description": "Pick an election from the list or create a new one"
+		},
+		"electionPicked": {
+			"description": "The election will take place in the country of {country}"
+		}
+	},
+	"dashCommands": {
+		"cancel": "The election was cancelled"
+	},
+	"errors": {
+		"noChannel": "Channel doesn't exist on interaction {id}"
+	}
+}

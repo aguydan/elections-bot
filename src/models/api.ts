@@ -9,6 +9,8 @@ import { FRONTEND_PATH } from '@/constants/frontend.js';
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');
 
+const { staticDir, port } = Config.api;
+
 export class API {
     private app: Express;
 
@@ -16,14 +18,15 @@ export class API {
         this.app = express();
         this.app.use(cors({ origin: FRONTEND_PATH }));
         this.app.use(express.json());
-        this.app.use(express.static('public'));
+        this.app.use(express.static(staticDir));
         this.setupControllers();
         this.app.use(handleError());
     }
 
     public async start(): Promise<void> {
         const listen = util.promisify(this.app.listen.bind(this.app));
-        await listen(Config.api.port);
+        //@ts-ignore
+        await listen(port);
 
         console.log('api started');
     }

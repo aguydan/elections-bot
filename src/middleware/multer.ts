@@ -5,10 +5,12 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');
 
+const { staticDir, uploadsDir } = Config.api;
+
 const storage = multer.diskStorage({
     destination(req, file, cb) {
-        mkdirp.sync(`${Config.api.staticDir}/${Config.api.uploadsDir}`);
-        cb(null, `${Config.api.staticDir}/${Config.api.uploadsDir}`);
+        mkdirp.sync(`${staticDir}/${uploadsDir}`);
+        cb(null, `${staticDir}/${uploadsDir}`);
     },
     filename(req, file, cb) {
         const uniqueSuffix = Date.now() + Math.round(Math.random() * 1e9);

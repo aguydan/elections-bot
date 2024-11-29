@@ -1,8 +1,9 @@
+import { i18n } from '@/utils/i18n.js';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 
 abstract class MenuFactory {
     public abstract createMenu(
-        options: (Record<string, any> & { id: number; name: string })[],
+        options: { id: number; name: string }[],
         uuid?: string,
         placeholder?: string
     ): { id: string; menu: ActionRowBuilder<StringSelectMenuBuilder> };
@@ -11,7 +12,7 @@ abstract class MenuFactory {
         return new ActionRowBuilder<ButtonBuilder>({
             components: [
                 new ButtonBuilder({
-                    label: label ?? 'To Elections Bot Website',
+                    label: label ?? i18n.__('menus.linkButton.label'),
                     url: path,
                     style: ButtonStyle.Link,
                 }),
@@ -22,7 +23,7 @@ abstract class MenuFactory {
 
 export class CandidatesMenuFactory extends MenuFactory {
     public createMenu(
-        options: (Record<string, any> & { id: number; name: string })[],
+        options: { id: number; name: string }[],
         uuid?: string,
         placeholder?: string
     ) {
@@ -34,7 +35,7 @@ export class CandidatesMenuFactory extends MenuFactory {
                 components: [
                     new StringSelectMenuBuilder({
                         custom_id: id,
-                        placeholder: placeholder ?? 'Select',
+                        placeholder: placeholder ?? i18n.__mf('menus.placeholder'),
                         min_values: 2,
                         max_values: options.length,
                         options: options.map(option => {
@@ -52,7 +53,7 @@ export class CandidatesMenuFactory extends MenuFactory {
 
 export class ElectionsMenuFactory extends MenuFactory {
     public createMenu(
-        options: (Record<string, any> & { id: number; name: string })[],
+        options: { id: number; name: string }[],
         uuid?: string,
         placeholder?: string
     ) {
@@ -64,7 +65,7 @@ export class ElectionsMenuFactory extends MenuFactory {
                 components: [
                     new StringSelectMenuBuilder({
                         custom_id: id,
-                        placeholder: placeholder ?? 'Select',
+                        placeholder: placeholder ?? i18n.__mf('menus.placeholder'),
                         max_values: 1,
                         options: options.map(option => {
                             return {

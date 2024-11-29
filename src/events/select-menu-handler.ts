@@ -28,6 +28,7 @@ export class SelectMenuHandler implements EventHandler {
         }
 
         if (prevInteraction.customId.startsWith('elections-menu')) {
+            //we can make a single regex and a function to just strip all of this
             const metadataId = prevInteraction.customId.replace('elections-menu-', '');
 
             const candidates = await candidateRepo.getAll();
@@ -37,7 +38,7 @@ export class SelectMenuHandler implements EventHandler {
 
             await InteractionUtils.send(prevInteraction, {
                 content:
-                    'Create a new candidate or choose at least 2 as participants in the election.',
+                    'Create a new candidate or choose at least 2 as candidates in the election.',
                 components: [button, menu.menu],
             });
 
@@ -62,7 +63,7 @@ export class SelectMenuHandler implements EventHandler {
                 menu.id,
                 ComponentType.StringSelect,
                 async interaction => {
-                    const participants = candidates.filter(candidate =>
+                    const filtered = candidates.filter(candidate =>
                         interaction.values.includes(candidate.id.toString())
                     )!;
 
@@ -70,16 +71,16 @@ export class SelectMenuHandler implements EventHandler {
                     const data = metadata[metadataId];
 
                     if (!data) {
-                        metadata[metadataId] = { participants, election: null };
+                        metadata[metadataId] = { candidates: filtered, election: null };
                     } else {
-                        data.participants = participants;
+                        data.candidates = filtered;
                         metadata[metadataId] = data;
                     }
 
                     console.log(metadata);
 
-                    const participantsEmbed = new EmbedBuilder({
-                        description: 'Hello' + participants,
+                    const candidatesEmbed = new EmbedBuilder({
+                        description: 'Hello' + filtered,
                         timestamp: new Date().toISOString(),
                         footer: {
                             text: 'Central Election Commitee',
@@ -89,7 +90,7 @@ export class SelectMenuHandler implements EventHandler {
                     await InteractionUtils.editReply(prevInteraction, {
                         content: null,
                         components: [],
-                        embeds: [participantsEmbed],
+                        embeds: [candidatesEmbed],
                     });
                 }
             );
@@ -97,13 +98,15 @@ export class SelectMenuHandler implements EventHandler {
             const manager = new CollectorManager();
             manager.init(dashCommandCollector);
             manager.init(menuCollector);
-        } else if (prevInteraction.customId.startsWith('candidates-menu')) {
+        }
+
+        if (prevInteraction.customId.startsWith('candidates-menu')) {
             const metadataId = prevInteraction.customId.replace('candidates-menu-', '');
 
             //maybe buttons also need a constructor
             const buttonId = 'hold-election-button-' + metadataId;
 
-            const holdElectionButton = new ActionRowBuilder<ButtonBuilder>({
+            const button = new ActionRowBuilder<ButtonBuilder>({
                 components: [
                     new ButtonBuilder({
                         custom_id: buttonId,
@@ -114,7 +117,7 @@ export class SelectMenuHandler implements EventHandler {
             });
 
             await InteractionUtils.send(prevInteraction, {
-                components: [holdElectionButton],
+                components: [button],
             });
 
             const { channel } = prevInteraction;

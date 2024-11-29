@@ -1,0 +1,23 @@
+{
+	"election": {
+		"commission": "Conseil constitutionnel"
+	},
+    "menus": {
+        "placeholder": "Список",
+        "linkButton": {
+            "label": "На сайт Elections Bot"
+        }
+    },
+	"embeds": {
+		"pickElection": {
+			"title": "ВЫБОРЫ",
+			"description": "Выберите шаблон выборов из списка или создайте новый"
+		},
+		"electionPicked": {
+			"description": "Итак, выборы пройдут в стране {country}"
+		}
+	},
+	"dashCommands": {
+		"cancel": "Выборы были отменены"
+	}
+}

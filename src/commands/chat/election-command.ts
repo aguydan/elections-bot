@@ -1,4 +1,9 @@
-import { ChatInputCommandInteraction, ComponentType, EmbedBuilder } from 'discord.js';
+import {
+    APIEmbed,
+    AttachmentBuilder,
+    ChatInputCommandInteraction,
+    ComponentType,
+} from 'discord.js';
 import { Command } from '../index.js';
 import { InteractionUtils } from '@/utils/index.js';
 import { FRONTEND_PATH } from '@/constants/frontend.js';
@@ -7,6 +12,8 @@ import { electionRepo } from '@/database/database.js';
 import { ElectionMetadata } from '@/models/election-metadata.js';
 import { CollectorManager } from '@/models/collector-manager.js';
 import { CollectorUtils } from '@/utils/collector-utils.js';
+import { i18n } from '@/utils/i18n.js';
+import { API_PATH, UPLOADS_PATH } from '@/constants/api.js';
 
 export class ElectionCommand implements Command {
     public names = ['election'];
@@ -22,13 +29,29 @@ export class ElectionCommand implements Command {
         const menu = menuFactory.createMenu(elections, metadataId);
         const button = menuFactory.createLinkButton(`${FRONTEND_PATH}/elections/create`);
 
+        const thumbnail = new AttachmentBuilder(`${API_PATH}/embeds/roman-election.jpg`);
+
+        const pickElectionEmbed: APIEmbed = {
+            color: 0xf0c445,
+            title: i18n.__('embeds.pickElection.title'),
+            description: i18n.__('embeds.pickElection.description'),
+            author: {
+                name: i18n.__('election.commission'),
+            },
+            thumbnail: {
+                url: 'attachment://roman-election.jpg',
+            },
+            timestamp: new Date().toISOString(),
+        };
+
         await InteractionUtils.send(prevInteraction, {
-            content: '👑 Create a new election preset or choose an existing one.',
+            embeds: [pickElectionEmbed],
             components: [button, menu.menu],
+            files: [thumbnail],
         });
 
         const { channel } = prevInteraction;
-        if (!channel) throw new Error("Channel doesn't exist'");
+        if (!channel) throw new Error(i18n.__mf('errors.noChannel', { id: prevInteraction.id }));
 
         const dashCommandCollector = CollectorUtils.createDashCommandCollector(
             channel,
@@ -36,10 +59,9 @@ export class ElectionCommand implements Command {
             async () => {
                 delete metadata[metadataId];
 
-                console.log('election command handler, interaction id: ' + prevInteraction.id);
-
                 await InteractionUtils.editReply(prevInteraction, {
-                    content: 'COMMAND CANCELLED',
+                    content: i18n.__('dashCommands.cancel'),
+                    embeds: [],
                     components: [],
                 });
             }
@@ -51,28 +73,32 @@ export class ElectionCommand implements Command {
             ComponentType.StringSelect,
             async interaction => {
                 const election = elections.find(
-                    election => election.id == Number(interaction.values[0]!)
+                    election => election.id == parseInt(interaction.values[0]!)
                 )!;
 
-                metadata[metadataId] = { election, participants: null };
+                metadata[metadataId] = { election, candidates: null };
 
-                const electionEmbed = new EmbedBuilder({
+                const thumbnail = new AttachmentBuilder(`${UPLOADS_PATH}/${election.flag_url}`);
+
+                const electionPickedEmbed: APIEmbed = {
+                    color: 0xf0c445,
                     title: election.name,
-                    description:
-                        'The election will take place in the country of ' +
-                        election.country +
-                        ' on ' +
-                        election.date,
-                    timestamp: new Date().toISOString(),
-                    footer: {
-                        text: 'Central Election Commitee',
+                    description: i18n.__mf('embeds.electionPicked.description', {
+                        country: election.country,
+                    }),
+                    author: {
+                        name: i18n.__('election.commission'),
                     },
-                });
+                    thumbnail: {
+                        url: `attachment://${election.flag_url}`,
+                    },
+                    timestamp: new Date().toISOString(),
+                };
 
                 await InteractionUtils.editReply(prevInteraction, {
-                    content: null,
                     components: [],
-                    embeds: [electionEmbed],
+                    embeds: [electionPickedEmbed],
+                    files: [thumbnail],
                 });
             }
         );
