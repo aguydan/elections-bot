@@ -6,5 +6,3 @@ export type ElectionMetadata = {
         candidates: Candidate[] | null;
     };
 };
-
-//IT SHOULD BE A CLASS ON THE BOT CLASS!!!!

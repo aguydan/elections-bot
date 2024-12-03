@@ -38,18 +38,18 @@ export class ElectionResultsBuilder {
     }
 
     public getTotalScoresFor(
-        participants: Candidate[]
+        candidates: Candidate[]
     ): this & { results: Results<DataWith<'score'>> } {
         const results: Results<DataWith<'score'>> = {};
 
-        for (const participant of participants) {
-            const totalScore = Object.entries(participant.score).reduce((acc, entry) => {
+        for (const candidate of candidates) {
+            const totalScore = Object.entries(candidate.score).reduce((acc, entry) => {
                 const [label, value] = entry;
 
                 return acc + value * Config.candidateScoreWeights[label];
             }, 0);
 
-            results[participant.id] = { score: totalScore };
+            results[candidate.id] = { score: totalScore };
         }
 
         console.log(results);

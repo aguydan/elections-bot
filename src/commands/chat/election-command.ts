@@ -24,6 +24,17 @@ export class ElectionCommand implements Command {
     ): Promise<void> {
         const metadataId = crypto.randomUUID();
 
+        /*
+            const metadataId = crypto.randomUUID();
+
+            globalMetadata[metatadaId] = {}
+            localMetadata = globalMetadata[metatadaId]
+
+            if (!options.election || stuff) {
+                pickElectionHandler(interaction, localMetadata, metadataId)
+            }
+        */
+
         const elections = await electionRepo.getAll();
         const menuFactory = new ElectionsMenuFactory();
         const menu = menuFactory.createMenu(elections, metadataId);
@@ -76,8 +87,6 @@ export class ElectionCommand implements Command {
                     election => election.id == parseInt(interaction.values[0]!)
                 )!;
 
-                metadata[metadataId] = { election, candidates: null };
-
                 const thumbnail = new AttachmentBuilder(`${UPLOADS_PATH}/${election.flag_url}`);
 
                 const electionPickedEmbed: APIEmbed = {
@@ -100,6 +109,20 @@ export class ElectionCommand implements Command {
                     embeds: [electionPickedEmbed],
                     files: [thumbnail],
                 });
+
+                const data = metadata[metadataId];
+
+                if (!data) {
+                    metadata[metadataId] = {
+                        election,
+                        candidates: null,
+                    };
+
+                    return;
+                }
+
+                data.election = election;
+                metadata[metadataId] = data;
             }
         );
 

@@ -2,12 +2,12 @@
 	"election": {
 		"commission": "Conseil constitutionnel"
 	},
-    "menus": {
-        "placeholder": "Список",
-        "linkButton": {
-            "label": "На сайт Elections Bot"
-        }
-    },
+	"menus": {
+		"placeholder": "Список",
+		"linkButton": {
+			"label": "На сайт Elections Bot"
+		}
+	},
 	"embeds": {
 		"pickElection": {
 			"title": "ВЫБОРЫ",
@@ -15,9 +15,23 @@
 		},
 		"electionPicked": {
 			"description": "Итак, выборы пройдут в стране {country}"
+		},
+		"pickCandidates": {
+			"title": "ПРОВОДИТСЯ НОМИНАЦИЯ КАНДИДАТОВ",
+			"description": "Выберите не менее 2 кандидатов из списка или создайте новых"
+		},
+		"candidatesPicked": {
+			"title": "КАНДИДАТЫ НОМИНИРОВАНЫ",
+			"description": "После жарких партийных дискуссий и смелых шагов отдельных людей комиссия {commission} представила список кандидатов на предстоящие выборы"
 		}
 	},
 	"dashCommands": {
 		"cancel": "Выборы были отменены"
-	}
+	},
+	"buttons": {
+		"holdElection": {
+			"label": "Провести выборы"
+		}
+	},
+	"candidate": "кандидат ☑️"
 }

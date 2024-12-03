@@ -2,12 +2,12 @@
 	"election": {
 		"commission": "Conseil constitutionnel"
 	},
-    "menus": {
-        "placeholder": "List",
-        "linkButton": {
-            "label": "To Elections Bot website"
-        }
-    },
+	"menus": {
+		"placeholder": "List",
+		"linkButton": {
+			"label": "To Elections Bot website"
+		}
+	},
 	"embeds": {
 		"pickElection": {
 			"title": "CALL FOR ELECTION",
@@ -15,6 +15,14 @@
 		},
 		"electionPicked": {
 			"description": "The election will take place in the country of {country}"
+		},
+		"pickCandidates": {
+			"title": "CANDIDATES ARE BEING NOMINATED",
+			"description": "Pick no less than 2 candidates from the list or create new ones"
+		},
+		"candidatesPicked": {
+			"title": "NOMINEES ANNOUNCED",
+			"description": "After heated party discussions and daring moves from certain individuals, the list of nominess for the upcoming election was presented by the {commission}"
 		}
 	},
 	"dashCommands": {
@@ -22,5 +30,11 @@
 	},
 	"errors": {
 		"noChannel": "Channel doesn't exist on interaction {id}"
-	}
+	},
+	"buttons": {
+		"holdElection": {
+			"label": "Hold election"
+		}
+	},
+	"candidate": "candidate ☑️"
 }

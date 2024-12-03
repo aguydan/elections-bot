@@ -2,7 +2,7 @@ import {
     ButtonHandler,
     CommandHandler,
     MessageHandler,
-    SelectMenuHandler,
+    StringSelectMenuHandler,
 } from '@/events/index.js';
 import {
     AutocompleteInteraction,
@@ -14,7 +14,6 @@ import {
     Message,
     StringSelectMenuInteraction,
 } from 'discord.js';
-import { ElectionMetadata } from './election-metadata';
 
 export class Bot {
     private ready = false;
@@ -24,9 +23,8 @@ export class Bot {
         private client: Client,
         private commandHandler: CommandHandler,
         private messageHandler: MessageHandler,
-        private selectMenuHandler: SelectMenuHandler,
-        private buttonHandler: ButtonHandler,
-        private metadata: ElectionMetadata
+        private stringSelectMenuHandler: StringSelectMenuHandler,
+        private buttonHandler: ButtonHandler
     ) {}
 
     public async start(): Promise<void> {
@@ -36,7 +34,9 @@ export class Bot {
 
     private registerListeners(): void {
         this.client.on(Events.ClientReady, () => this.onReady());
-        this.client.on(Events.InteractionCreate, (intr: Interaction) => this.onInteraction(intr));
+        this.client.on(Events.InteractionCreate, (interaction: Interaction) =>
+            this.onInteraction(interaction)
+        );
         this.client.on(Events.MessageCreate, (message: Message) => this.onMessage(message));
     }
 
@@ -56,29 +56,32 @@ export class Bot {
         console.log('ready');
     }
 
-    private async onInteraction(intr: Interaction): Promise<void> {
+    private async onInteraction(interaction: Interaction): Promise<void> {
         if (!this.ready) return;
 
         //maybe switch statement?? maybe handlers as an argument since they all do one thing?
-        if (intr instanceof CommandInteraction || intr instanceof AutocompleteInteraction) {
+        if (
+            interaction instanceof CommandInteraction ||
+            interaction instanceof AutocompleteInteraction
+        ) {
             try {
-                await this.commandHandler.process(intr, this.metadata);
+                await this.commandHandler.process(interaction);
             } catch (error) {
                 console.log(error);
             }
         }
 
-        if (intr instanceof StringSelectMenuInteraction) {
+        if (interaction instanceof StringSelectMenuInteraction) {
             try {
-                await this.selectMenuHandler.process(intr, this.metadata);
+                await this.stringSelectMenuHandler.process(interaction);
             } catch (error) {
                 console.log(error);
             }
         }
 
-        if (intr instanceof ButtonInteraction) {
+        if (interaction instanceof ButtonInteraction) {
             try {
-                await this.buttonHandler.process(intr, this.metadata);
+                await this.buttonHandler.process(interaction);
             } catch (error) {
                 console.log(error);
             }

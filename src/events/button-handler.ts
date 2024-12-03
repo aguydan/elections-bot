@@ -1,82 +1,39 @@
-import { AttachmentBuilder, ButtonInteraction, EmbedBuilder } from 'discord.js';
+import { ButtonInteraction } from 'discord.js';
 import { EventHandler } from './index.js';
 import { ElectionMetadata } from '@/models/election-metadata';
-import { InteractionUtils } from '@/utils/interaction-utils.js';
-import { FrontendUtils } from '@/utils/frontend-utils.js';
-import { FRONTEND_PATH } from '@/constants/frontend.js';
-import { ElectionResultsBuilder } from '@/models/election-results-builder.js';
+import { Button } from '@/components/buttons/index.js';
+import { CUSTOM_ID_REGEX } from '@/constants/bot.js';
 
 export class ButtonHandler implements EventHandler {
-    public async process(
-        prevInteraction: ButtonInteraction,
-        metadata: ElectionMetadata
-    ): Promise<void> {
-        if (
-            prevInteraction.user.id === prevInteraction.client.user.id ||
-            prevInteraction.user.bot
-        ) {
+    constructor(
+        private buttons: Button[],
+        private metadata: ElectionMetadata
+    ) {}
+
+    public async process(interaction: ButtonInteraction): Promise<void> {
+        if (interaction.user.id === interaction.client.user.id || interaction.user.bot) {
             return;
         }
 
-        //probably it should be eventually based on the contents of the metadata and not on custom ids
-        if (prevInteraction.customId.startsWith('hold-election-button')) {
-            const loadingEmbed = new EmbedBuilder({
-                title: 'Votes are being counted...',
-                description: 'Soon the central election commitee will present the results',
-                timestamp: new Date().toISOString(),
-                footer: {
-                    text: 'Central Election Commitee',
-                },
-            });
+        const match = interaction.customId.match(CUSTOM_ID_REGEX);
 
-            await InteractionUtils.send(prevInteraction, loadingEmbed);
-
-            const metadataId = prevInteraction.customId.replace('hold-election-button-', '');
-
-            const data = metadata[metadataId];
-
-            if (!data) {
-                console.log('no metadata with uuid: ' + metadataId);
-                return;
-            }
-
-            const { election, candidates } = data;
-
-            if (!election || !candidates) {
-                console.log('no election or candidates provided');
-                return;
-            }
-
-            const results = (
-                await new ElectionResultsBuilder()
-                    .getTotalScoresFor(candidates)
-                    .randomize()
-                    .normalize()
-                    .getResults(election)
-                    .save(election.id)
-            ).results;
-
-            delete metadata[metadataId];
-
-            const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
-            const image = new AttachmentBuilder(buffer, { name: 'results.jpg' });
-
-            const resultsEmbed = new EmbedBuilder({
-                title: 'The results have arrived!',
-                description: JSON.stringify(results),
-                timestamp: new Date().toISOString(),
-                image: {
-                    url: `attachment://results.jpg`,
-                },
-                footer: {
-                    text: 'Central Election Commitee',
-                },
-            });
-
-            await InteractionUtils.editReply(prevInteraction, {
-                embeds: [resultsEmbed],
-                files: [image],
-            });
+        if (!match) {
+            throw new Error('Invalid button id for: ' + interaction.customId);
         }
+
+        const [buttonId, metadataId] = match.slice(1);
+
+        if (!buttonId || !metadataId) {
+            throw new Error('Something wrong with regex');
+        }
+
+        const button = this.buttons.find(button => button.ids.includes(buttonId));
+
+        if (!button) {
+            throw new Error('no button with id: ' + buttonId);
+        }
+
+        //try catch???
+        await button.execute(interaction, this.metadata, metadataId);
     }
 }

@@ -17,7 +17,7 @@ export class ScoreCommand implements Command {
         const DEFAULT_VALUE = 0.05;
 
         const args = {
-            score_parameter: interaction.options.getString(
+            scoreParameter: interaction.options.getString(
                 'score_parameter'
             ) as keyof CandidateScore,
             operation: interaction.options.getString('operation'),
@@ -32,23 +32,25 @@ export class ScoreCommand implements Command {
 
         const { score } = await candidateRepo.getById(id);
 
-        const prev = score[args.score_parameter];
+        const prev = score[args.scoreParameter];
         const value = args.value ? args.value / 100 : DEFAULT_VALUE;
 
+        let curr = 0;
+
         if (args.operation == 'increment') {
-            score[args.score_parameter] = Number(
-                Math.max(0, Math.min(prev + value, 100)).toFixed(2)
-            );
-        } else {
-            score[args.score_parameter] = Number(
-                Math.max(0, Math.min(prev - value, 100)).toFixed(2)
-            );
+            curr = prev + value;
         }
+
+        if (args.operation == 'decrement') {
+            curr = prev - value;
+        }
+
+        score[args.scoreParameter] = parseFloat(Math.max(0, Math.min(curr, 100)).toFixed(2));
 
         await candidateRepo.updateScore(id, score);
 
         await InteractionUtils.send(interaction, {
-            content: 'we changed ' + args.score_parameter + ' ' + args.operation + ' ' + args.value,
+            content: 'we changed ' + args.scoreParameter + ' ' + args.operation + ' ' + args.value,
         });
     }
 

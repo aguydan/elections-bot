@@ -7,10 +7,16 @@ import {
     ButtonHandler,
     CommandHandler,
     MessageHandler,
-    SelectMenuHandler,
+    StringSelectMenuHandler,
 } from './events/index.js';
 import { ElectionCommand, ScoreCommand } from './commands/chat/index.js';
 import { ElectionMetadata } from './models/election-metadata.js';
+import {
+    PickCandidatesMenu,
+    PickElectionMenu,
+    StringSelectMenu,
+} from './components/menus/index.js';
+import { Button, HoldElectionButton } from './components/buttons/index.js';
 
 //по умолчанию загрузить json конфиг в es6 модуль нельзя,
 //но можно воспольщоваться commonjs функцией require, создав её es6 вариант
@@ -23,23 +29,24 @@ async function start(): Promise<void> {
         intents: Config.client.intents,
     });
 
-    const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
-
     const electionMetadata: ElectionMetadata = {};
 
-    const commandHandler = new CommandHandler(commands);
+    const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
+    const menus: StringSelectMenu[] = [new PickElectionMenu(), new PickCandidatesMenu()];
+    const buttons: Button[] = [new HoldElectionButton()];
+
+    const commandHandler = new CommandHandler(commands, electionMetadata);
     const messageHandler = new MessageHandler();
-    const selectMenuHandler = new SelectMenuHandler();
-    const buttonHandler = new ButtonHandler();
+    const stringSelectMenuHandler = new StringSelectMenuHandler(menus, electionMetadata);
+    const buttonHandler = new ButtonHandler(buttons, electionMetadata);
 
     const bot = new Bot(
         Config.client.token,
         client,
         commandHandler,
         messageHandler,
-        selectMenuHandler,
-        buttonHandler,
-        electionMetadata
+        stringSelectMenuHandler,
+        buttonHandler
     );
 
     if (process.argv[2] === 'commands') {

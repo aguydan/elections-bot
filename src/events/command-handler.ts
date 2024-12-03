@@ -10,12 +10,12 @@ import { CommandUtils, InteractionUtils } from '@/utils/index.js';
 import { ElectionMetadata } from '@/models/election-metadata.js';
 
 export class CommandHandler implements EventHandler {
-    constructor(private commands: Command[]) {}
+    constructor(
+        private commands: Command[],
+        private metadata: ElectionMetadata
+    ) {}
 
-    public async process(
-        interaction: CommandInteraction | AutocompleteInteraction,
-        metadata: ElectionMetadata
-    ): Promise<void> {
+    public async process(interaction: CommandInteraction | AutocompleteInteraction): Promise<void> {
         //Don't respond to self or other bots
         if (interaction.user.id === interaction.client.user.id || interaction.user.bot) {
             return;
@@ -62,7 +62,7 @@ export class CommandHandler implements EventHandler {
         //get data from database if needed to record the interaction for example
 
         try {
-            await command.execute(interaction, metadata);
+            await command.execute(interaction, this.metadata);
         } catch (error) {
             console.log(error);
 

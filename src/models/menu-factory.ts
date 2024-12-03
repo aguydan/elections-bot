@@ -27,7 +27,7 @@ export class CandidatesMenuFactory extends MenuFactory {
         uuid?: string,
         placeholder?: string
     ) {
-        const id = 'candidates-menu-' + (uuid ?? crypto.randomUUID());
+        const id = 'pick-candidates-menu-' + (uuid ?? crypto.randomUUID());
 
         return {
             id,
@@ -35,7 +35,7 @@ export class CandidatesMenuFactory extends MenuFactory {
                 components: [
                     new StringSelectMenuBuilder({
                         custom_id: id,
-                        placeholder: placeholder ?? i18n.__mf('menus.placeholder'),
+                        placeholder: placeholder ?? i18n.__('menus.placeholder'),
                         min_values: 2,
                         max_values: options.length,
                         options: options.map(option => {
@@ -57,7 +57,7 @@ export class ElectionsMenuFactory extends MenuFactory {
         uuid?: string,
         placeholder?: string
     ) {
-        const id = 'elections-menu-' + (uuid ?? crypto.randomUUID());
+        const id = 'pick-election-menu-' + (uuid ?? crypto.randomUUID());
 
         return {
             id,
@@ -65,7 +65,7 @@ export class ElectionsMenuFactory extends MenuFactory {
                 components: [
                     new StringSelectMenuBuilder({
                         custom_id: id,
-                        placeholder: placeholder ?? i18n.__mf('menus.placeholder'),
+                        placeholder: placeholder ?? i18n.__('menus.placeholder'),
                         max_values: 1,
                         options: options.map(option => {
                             return {
