@@ -166,7 +166,7 @@ export class ElectionResultsBuilder {
         try {
             await Promise.all(promises);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
 
         return this;

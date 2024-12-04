@@ -1,6 +1,6 @@
 import { Client, REST } from 'discord.js';
 import { createRequire } from 'node:module';
-import { CommandRegistrationService } from './services/index.js';
+import { CommandRegistrationService, StateService } from './services/index.js';
 import { Bot } from './models/bot.js';
 import { ChatCommandMetadata, Command } from './commands/index.js';
 import {
@@ -10,7 +10,6 @@ import {
     StringSelectMenuHandler,
 } from './events/index.js';
 import { ElectionCommand, ScoreCommand } from './commands/chat/index.js';
-import { ElectionMetadata } from './models/election-metadata.js';
 import {
     PickCandidatesMenu,
     PickElectionMenu,
@@ -29,16 +28,16 @@ async function start(): Promise<void> {
         intents: Config.client.intents,
     });
 
-    const electionMetadata: ElectionMetadata = {};
+    const stateService = new StateService();
 
     const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
     const menus: StringSelectMenu[] = [new PickElectionMenu(), new PickCandidatesMenu()];
     const buttons: Button[] = [new HoldElectionButton()];
 
-    const commandHandler = new CommandHandler(commands, electionMetadata);
+    const commandHandler = new CommandHandler(commands, stateService);
     const messageHandler = new MessageHandler();
-    const stringSelectMenuHandler = new StringSelectMenuHandler(menus, electionMetadata);
-    const buttonHandler = new ButtonHandler(buttons, electionMetadata);
+    const stringSelectMenuHandler = new StringSelectMenuHandler(menus, stateService);
+    const buttonHandler = new ButtonHandler(buttons, stateService);
 
     const bot = new Bot(
         Config.client.token,

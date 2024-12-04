@@ -6,19 +6,18 @@ import {
     StringSelectMenuInteraction,
 } from 'discord.js';
 import { StringSelectMenu } from './index.js';
-import { ElectionMetadata } from '@/models/election-metadata.js';
 import { InteractionUtils } from '@/utils/interaction-utils.js';
 import { CollectorUtils } from '@/utils/collector-utils.js';
 import { CollectorManager } from '@/models/collector-manager.js';
 import { i18n } from '@/utils/i18n.js';
+import { StateName, StateService } from '@/services/state-service.js';
 
 export class PickCandidatesMenu implements StringSelectMenu {
     public ids = ['pick-candidates-menu'];
 
     public async execute(
         prevInteraction: StringSelectMenuInteraction,
-        metadata: ElectionMetadata,
-        metadataId: string
+        stateService: StateService
     ): Promise<void> {
         //maybe buttons also need a constructor
         const buttonId = 'hold-election-button-' + metadataId;
@@ -46,7 +45,7 @@ export class PickCandidatesMenu implements StringSelectMenu {
             channel,
             '-cancel',
             async () => {
-                delete metadata[metadataId];
+                stateService.delete(StateName.Election, stateId);
 
                 await InteractionUtils.editReply(prevInteraction, {
                     content: i18n.__('dashCommands.cancel'),

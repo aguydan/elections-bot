@@ -1,13 +1,13 @@
 import { StringSelectMenuInteraction } from 'discord.js';
 import { EventHandler } from './index.js';
-import { ElectionMetadata } from '@/models/election-metadata.js';
 import { StringSelectMenu } from '@/components/menus/index.js';
-import { CUSTOM_ID_REGEX } from '@/constants/bot.js';
+import { StateService } from '@/services/state-service.js';
+import { UUID_REGEX } from '@/constants/bot.js';
 
 export class StringSelectMenuHandler implements EventHandler {
     constructor(
         private menus: StringSelectMenu[],
-        private metadata: ElectionMetadata
+        private stateService: StateService
     ) {}
 
     public async process(interaction: StringSelectMenuInteraction): Promise<void> {
@@ -15,25 +15,20 @@ export class StringSelectMenuHandler implements EventHandler {
             return;
         }
 
-        const match = interaction.customId.match(CUSTOM_ID_REGEX);
+        const menuName = interaction.customId.replace(UUID_REGEX, '');
 
-        if (!match) {
-            throw new Error('Invalid menu id for: ' + interaction.customId);
+        if (!menuName) {
+            throw new Error('invalid component name');
         }
 
-        const [menuId, metadataId] = match.slice(1);
-
-        if (!menuId || !metadataId) {
-            throw new Error('Something wrong with regex');
-        }
-
-        const menu = this.menus.find(menu => menu.ids.includes(menuId));
+        const menu = this.menus.find(menu => menu.ids.includes(menuName));
 
         if (!menu) {
-            throw new Error('no menu with id: ' + menuId);
+            throw new Error('no menu with id: ' + menuName);
         }
 
-        await menu.execute(interaction, this.metadata, metadataId);
+        //try catch???
+        await menu.execute(interaction, this.stateService);
 
         console.log('interacts with select menu', interaction.customId);
     }

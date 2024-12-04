@@ -1,6 +1,6 @@
 import { ColumnType, Generated, Insertable, Selectable } from 'kysely';
 import { Election } from './index.js';
-import { PartialNull } from '@/models/partial-null.js';
+import { PartialNull } from '@/models/utility-types.js';
 
 export interface HeldElectionTable {
     id: Generated<number>;

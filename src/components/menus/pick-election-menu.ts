@@ -5,7 +5,6 @@ import {
     StringSelectMenuInteraction,
 } from 'discord.js';
 import { StringSelectMenu } from './index.js';
-import { ElectionMetadata } from '@/models/election-metadata.js';
 import { InteractionUtils } from '@/utils/interaction-utils.js';
 import { CollectorUtils } from '@/utils/collector-utils.js';
 import { CollectorManager } from '@/models/collector-manager.js';
@@ -14,14 +13,14 @@ import { CandidatesMenuFactory } from '@/models/menu-factory.js';
 import { FRONTEND_PATH } from '@/constants/frontend.js';
 import { API_PATH } from '@/constants/api.js';
 import { i18n } from '@/utils/i18n.js';
+import { StateName, StateService } from '@/services/state-service.js';
 
 export class PickElectionMenu implements StringSelectMenu {
     public ids = ['pick-election-menu'];
 
     public async execute(
         prevInteraction: StringSelectMenuInteraction,
-        metadata: ElectionMetadata,
-        metadataId: string
+        stateService: StateService
     ): Promise<void> {
         const candidates = await candidateRepo.getAll();
         const menuFactory = new CandidatesMenuFactory();
@@ -58,7 +57,7 @@ export class PickElectionMenu implements StringSelectMenu {
             channel,
             '-cancel',
             async () => {
-                delete metadata[metadataId];
+                stateService.delete(StateName.Election, stateId);
 
                 await InteractionUtils.editReply(prevInteraction, {
                     content: i18n.__('dashCommands.cancel'),
@@ -76,6 +75,11 @@ export class PickElectionMenu implements StringSelectMenu {
                 const filtered = candidates.filter(candidate =>
                     interaction.values.includes(candidate.id.toString())
                 )!;
+
+                stateService.set(StateName.Election, stateId, prev => ({
+                    ...prev,
+                    candidates: filtered,
+                }));
 
                 const candidatesPickedEmbed: APIEmbed = {
                     color: 0xf0c445,
@@ -101,22 +105,6 @@ export class PickElectionMenu implements StringSelectMenu {
                     embeds: [candidatesPickedEmbed],
                     files: [],
                 });
-
-                const data = metadata[metadataId];
-
-                if (!data) {
-                    metadata[metadataId] = {
-                        election: null,
-                        candidates: filtered,
-                    };
-
-                    return;
-                }
-
-                data.candidates = filtered;
-                metadata[metadataId] = data;
-
-                console.log(metadata);
             }
         );
 

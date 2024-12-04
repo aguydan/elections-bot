@@ -7,12 +7,12 @@ import {
     EmbedBuilder,
 } from 'discord.js';
 import { CommandUtils, InteractionUtils } from '@/utils/index.js';
-import { ElectionMetadata } from '@/models/election-metadata.js';
+import { StateService } from '@/services/state-service.js';
 
 export class CommandHandler implements EventHandler {
     constructor(
         private commands: Command[],
-        private metadata: ElectionMetadata
+        private stateService: StateService
     ) {}
 
     public async process(interaction: CommandInteraction | AutocompleteInteraction): Promise<void> {
@@ -62,7 +62,7 @@ export class CommandHandler implements EventHandler {
         //get data from database if needed to record the interaction for example
 
         try {
-            await command.execute(interaction, this.metadata);
+            await command.execute(interaction, this.stateService);
         } catch (error) {
             console.log(error);
 

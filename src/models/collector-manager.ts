@@ -1,7 +1,6 @@
 import {
     CollectorWrapper,
     ComponentTypeToInteraction,
-    SupportedComponentType,
     SupportedData,
 } from '@/utils/collector-utils.js';
 import {
@@ -12,13 +11,14 @@ import {
     MessageCollector,
     Snowflake,
 } from 'discord.js';
+import { ValueOf } from './utility-types';
 
 export class CollectorManager {
     private messageCollectors: Collector<Snowflake, Message, [Collection<Snowflake, Message>]>[];
     private interactionCollectors: Collector<
         Snowflake,
-        ComponentTypeToInteraction[SupportedComponentType],
-        [Collection<Snowflake, ComponentTypeToInteraction[SupportedComponentType]>]
+        ValueOf<ComponentTypeToInteraction>,
+        [Collection<Snowflake, ValueOf<ComponentTypeToInteraction>>]
     >[];
 
     constructor() {

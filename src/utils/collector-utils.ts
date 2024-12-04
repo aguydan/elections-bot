@@ -1,4 +1,5 @@
 import { COLLECTOR_TIMER } from '@/constants/discord.js';
+import { ValueOf } from '@/models/utility-types';
 import {
     BaseInteraction,
     ButtonInteraction,
@@ -35,7 +36,7 @@ export type ComponentTypeToInteraction = {
     [ComponentType.Button]: ButtonInteraction;
 };
 
-export type SupportedData = Message | ComponentTypeToInteraction[SupportedComponentType];
+export type SupportedData = Message | ValueOf<ComponentTypeToInteraction>;
 
 export type CollectorWrapper<T extends SupportedData> = {
     collector: Collector<Snowflake, T, [Collection<Snowflake, T>]>;

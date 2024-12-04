@@ -1,6 +1,7 @@
 import { i18n } from '@/utils/i18n.js';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 
+//I have a feeling we don't need this factory at all'
 abstract class MenuFactory {
     public abstract createMenu(
         options: { id: number; name: string }[],
