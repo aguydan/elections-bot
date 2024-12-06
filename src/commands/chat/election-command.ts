@@ -24,6 +24,7 @@ export class ElectionCommand implements Command {
     ): Promise<void> {
         const stateId = crypto.randomUUID();
 
+        //try catch if api isnt responding
         const elections = await electionRepo.getAll();
         const menuFactory = new ElectionsMenuFactory();
         const menu = menuFactory.createMenu(elections, stateId);
@@ -59,14 +60,13 @@ export class ElectionCommand implements Command {
             channel,
             '-cancel',
             async () => {
-                //                 delete metadata[metadataId];
-
                 stateService.delete(StateName.Election, stateId);
 
                 await InteractionUtils.editReply(prevInteraction, {
                     content: i18n.__('dashCommands.cancel'),
                     embeds: [],
                     components: [],
+                    files: [],
                 });
             }
         );
@@ -80,10 +80,9 @@ export class ElectionCommand implements Command {
                     election => election.id == parseInt(interaction.values[0]!)
                 )!;
 
-                stateService.set(StateName.Status, stateId, prev => ({
+                stateService.set(StateName.Election, stateId, prev => ({
                     ...prev,
                     election,
-                    dammy: 'true',
                 }));
 
                 const thumbnail = new AttachmentBuilder(`${UPLOADS_PATH}/${election.flag_url}`);
@@ -108,20 +107,6 @@ export class ElectionCommand implements Command {
                     embeds: [electionPickedEmbed],
                     files: [thumbnail],
                 });
-
-                /*                 const data = metadata[metadataId];
-
-                if (!data) {
-                    metadata[metadataId] = {
-                        election,
-                        candidates: null,
-                    };
-
-                    return;
-                }
-
-                data.election = election;
-                metadata[metadataId] = data; */
             }
         );
 

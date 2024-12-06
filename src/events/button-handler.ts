@@ -2,7 +2,7 @@ import { ButtonInteraction } from 'discord.js';
 import { EventHandler } from './index.js';
 import { Button } from '@/components/buttons/index.js';
 import { StateService } from '@/services/state-service.js';
-import { UUID_REGEX } from '@/constants/bot.js';
+import { RegexUtils } from '@/utils/regex-utils.js';
 
 export class ButtonHandler implements EventHandler {
     constructor(
@@ -15,13 +15,13 @@ export class ButtonHandler implements EventHandler {
             return;
         }
 
-        const buttonName = interaction.customId.replace(UUID_REGEX, '');
+        const buttonName = RegexUtils.getComponentName(interaction.customId);
 
         if (!buttonName) {
             throw new Error('invalid component name');
         }
 
-        const button = this.buttons.find(button => button.ids.includes(buttonName));
+        const button = this.buttons.find(button => button.names.includes(buttonName));
 
         if (!button) {
             throw new Error('no button with id: ' + buttonName);

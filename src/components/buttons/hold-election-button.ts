@@ -5,11 +5,14 @@ import { ElectionResultsBuilder } from '@/models/election-results-builder.js';
 import { FrontendUtils } from '@/utils/frontend-utils.js';
 import { FRONTEND_PATH } from '@/constants/frontend.js';
 import { StateName, StateService } from '@/services/state-service.js';
+import { RegexUtils } from '@/utils/regex-utils.js';
 
 export class HoldElectionButton implements Button {
-    public ids = ['hold-election-button'];
+    public names = ['hold-election-button'];
 
     public async execute(prevInteraction: ButtonInteraction, stateService: StateService) {
+        const stateId = RegexUtils.getStateId(prevInteraction.customId);
+
         const loadingEmbed: APIEmbed = {
             color: 0xf0c445,
             title: 'Votes are being counted...',
@@ -57,8 +60,13 @@ export class HoldElectionButton implements Button {
                     v.user.send('Do you accept election results?');
                 }); */
 
-        const buffer = await FrontendUtils.getResultsScreenshot(`${FRONTEND_PATH}/results`);
-        const image = new AttachmentBuilder(buffer, { name: 'results.jpg' });
+        const buffer = await FrontendUtils.getResultsImage(`${FRONTEND_PATH}/results`);
+
+        //everything else here should be based on whether buffer was received or not
+
+        const image = new AttachmentBuilder(buffer ? buffer : 'ddsdsdsddsd', {
+            name: 'results.jpg',
+        });
 
         const resultsEmbed: APIEmbed = {
             color: 0xf0c445,
@@ -67,9 +75,6 @@ export class HoldElectionButton implements Button {
             timestamp: new Date().toISOString(),
             image: {
                 url: `attachment://results.jpg`,
-            },
-            footer: {
-                text: 'Central Election Commitee',
             },
         };
 

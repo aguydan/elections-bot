@@ -19,14 +19,6 @@ import {
 } from 'discord.js';
 
 //move these monstrocities elsewhere
-export type SupportedComponentType =
-    | ComponentType.StringSelect
-    | ComponentType.UserSelect
-    | ComponentType.RoleSelect
-    | ComponentType.MentionableSelect
-    | ComponentType.ChannelSelect
-    | ComponentType.Button;
-
 export type ComponentTypeToInteraction = {
     [ComponentType.StringSelect]: StringSelectMenuInteraction;
     [ComponentType.UserSelect]: UserSelectMenuInteraction;
@@ -36,9 +28,9 @@ export type ComponentTypeToInteraction = {
     [ComponentType.Button]: ButtonInteraction;
 };
 
-export type SupportedData = Message | ValueOf<ComponentTypeToInteraction>;
+export type Collectable = Message | ValueOf<ComponentTypeToInteraction>;
 
-export type CollectorWrapper<T extends SupportedData> = {
+export type CollectorWrapper<T extends Collectable> = {
     collector: Collector<Snowflake, T, [Collection<Snowflake, T>]>;
     onCollect: (data: T) => Promise<void>;
 };
@@ -58,7 +50,7 @@ export class CollectorUtils {
         return { collector, onCollect: onCollect ?? (async () => {}) };
     }
 
-    public static createComponentCollector<T extends SupportedComponentType>(
+    public static createComponentCollector<T extends keyof ComponentTypeToInteraction>(
         interaction: BaseInteraction,
         componentId: string,
         componentType: T,

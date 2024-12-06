@@ -124,7 +124,18 @@ export class ElectionResultsBuilder {
 
             freeVotes -= votes;
 
-            if (freeVotes === 0 && hasFreeVotes) {
+            /*
+             * Sometimes due to rounding one nonexistent vote ends up
+             * being added to the candidate who lost the most.
+             *
+             * This here ensures that whatever is added is immediately
+             * substracted from the final bunch of votes so that in total
+             * all votes are exactly the same as the votingPool number
+             */
+            if (freeVotes <= 0) {
+                votes += freeVotes;
+                freeVotes = 0;
+
                 hasFreeVotes = false;
             }
 

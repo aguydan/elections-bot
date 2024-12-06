@@ -2,7 +2,7 @@ import { StringSelectMenuInteraction } from 'discord.js';
 import { EventHandler } from './index.js';
 import { StringSelectMenu } from '@/components/menus/index.js';
 import { StateService } from '@/services/state-service.js';
-import { UUID_REGEX } from '@/constants/bot.js';
+import { RegexUtils } from '@/utils/regex-utils.js';
 
 export class StringSelectMenuHandler implements EventHandler {
     constructor(
@@ -15,13 +15,13 @@ export class StringSelectMenuHandler implements EventHandler {
             return;
         }
 
-        const menuName = interaction.customId.replace(UUID_REGEX, '');
+        const menuName = RegexUtils.getComponentName(interaction.customId);
 
         if (!menuName) {
             throw new Error('invalid component name');
         }
 
-        const menu = this.menus.find(menu => menu.ids.includes(menuName));
+        const menu = this.menus.find(menu => menu.names.includes(menuName));
 
         if (!menu) {
             throw new Error('no menu with id: ' + menuName);

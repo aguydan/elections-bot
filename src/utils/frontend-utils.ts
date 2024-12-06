@@ -1,23 +1,33 @@
 import puppeteer from 'puppeteer';
 
 export class FrontendUtils {
-    public static async getResultsScreenshot(path: string): Promise<Buffer> {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
-
-        await page.setViewport({ width: 1920, height: 1080 });
+    public static async getResultsImage(path: string): Promise<Buffer | null> {
+        let browser;
+        let page;
 
         try {
+            browser = await puppeteer.launch();
+            page = await browser.newPage();
+        } catch (error) {
+            console.error('Initialization error: ' + error);
+
+            return null;
+        }
+
+        try {
+            await page.setViewport({ width: 1920, height: 1080 });
+
             await page.goto(path, { waitUntil: 'networkidle0' });
             const screenshot = await page.screenshot();
 
-            await page.close();
-            await browser.close();
-
             return Buffer.from(screenshot);
         } catch (error) {
-            //in case the frontend is not available
-            throw error;
+            console.error(error);
+
+            return null;
+        } finally {
+            await page.close();
+            await browser.close();
         }
     }
 }

@@ -14,17 +14,20 @@ import { FRONTEND_PATH } from '@/constants/frontend.js';
 import { API_PATH } from '@/constants/api.js';
 import { i18n } from '@/utils/i18n.js';
 import { StateName, StateService } from '@/services/state-service.js';
+import { RegexUtils } from '@/utils/regex-utils.js';
 
 export class PickElectionMenu implements StringSelectMenu {
-    public ids = ['pick-election-menu'];
+    public names = ['pick-election-menu'];
 
     public async execute(
         prevInteraction: StringSelectMenuInteraction,
         stateService: StateService
     ): Promise<void> {
+        const stateId = RegexUtils.getStateId(prevInteraction.customId);
+
         const candidates = await candidateRepo.getAll();
         const menuFactory = new CandidatesMenuFactory();
-        const menu = menuFactory.createMenu(candidates, metadataId);
+        const menu = menuFactory.createMenu(candidates, stateId);
         const button = menuFactory.createLinkButton(`${FRONTEND_PATH}/candidates/create`);
 
         const thumbnail = new AttachmentBuilder(`${API_PATH}/embeds/roman-election.jpg`);
@@ -63,6 +66,7 @@ export class PickElectionMenu implements StringSelectMenu {
                     content: i18n.__('dashCommands.cancel'),
                     embeds: [],
                     components: [],
+                    files: [],
                 });
             }
         );

@@ -1,6 +1,6 @@
-import { UUID_REGEX } from '@/constants/bot.js';
 import { ElectionState, ElectionStateValue } from '@/models/election-state.js';
 import { ValueOf } from '@/models/utility-types.js';
+import { RegexUtils } from '@/utils/regex-utils.js';
 
 export enum StateName {
     Election = 1,
@@ -15,11 +15,9 @@ type StateNameToValueType = {
 };
 
 export class StateService {
-    constructor(private states: StateNameToStateType) {
-        this.states = {
-            [StateName.Election]: {},
-        };
-    }
+    private states: StateNameToStateType = {
+        [StateName.Election]: {},
+    };
 
     public set<T extends StateName>(
         name: T,
@@ -40,14 +38,7 @@ export class StateService {
     ): void {
         const prevState: ValueOf<StateNameToStateType> = this.states[name];
 
-        //as a util function that checks any kind of id and gives back uuid
-        const componentName = id.replace(UUID_REGEX, '');
-        const uuid = id.replace(componentName, '');
-
-        if (!uuid) {
-            console.error('fuck uuid');
-        }
-
+        const uuid = RegexUtils.getStateId(id);
         let value = prevState[uuid] ?? {};
 
         if (typeof newStateValue === 'function') {
@@ -62,12 +53,7 @@ export class StateService {
     public get<T extends StateName>(name: T, id: string): StateNameToValueType[T] {
         const state = this.states[name];
 
-        const componentName = id.replace(UUID_REGEX, '');
-        const uuid = id.replace(componentName, '');
-
-        if (!uuid) {
-            console.error('fuck uuid');
-        }
+        const uuid = RegexUtils.getStateId(id);
 
         return state[uuid] ?? {};
     }
@@ -75,12 +61,7 @@ export class StateService {
     public delete(name: StateName, id: string): void {
         const state = this.states[name];
 
-        const componentName = id.replace(UUID_REGEX, '');
-        const uuid = id.replace(componentName, '');
-
-        if (!uuid) {
-            console.error('fuck uuid');
-        }
+        const uuid = RegexUtils.getStateId(id);
 
         delete state[uuid];
     }
