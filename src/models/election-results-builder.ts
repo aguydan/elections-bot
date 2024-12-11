@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');
 
-type Results<T> = Map<number, T>;
+type Results<T> = Record<number | string, T>;
 
 type Data = {
     score?: number;
@@ -13,27 +13,29 @@ type Data = {
     percentage?: number;
 };
 
-type FullData = Required<Data>;
-type DataWith<T extends keyof FullData> = Data & Pick<FullData, T>;
+type DataWith<T extends keyof Data> = Data & Pick<Required<Data>, T>;
 
 export class ElectionResultsBuilder {
-    public results = new Map<number, Data>();
+    public results = {} as Results<Data>;
 
     public sumOf<T extends keyof Data>(
         this: this & { results: Results<DataWith<T>> },
         of: T
     ): number {
-        return [...this.results].reduce((acc, result) => acc + result[1][of], 0);
+        return Object.values(this.results).reduce((acc, result) => acc + result[of], 0);
     }
 
-    public sortedBy<T extends keyof Data>(this: this & { results: Results<DataWith<T>> }, by: T) {
-        return new Map([...this.results].sort((a, b) => b[1][by] - a[1][by]));
+    public sortBy<A extends keyof Data, B extends DataWith<A>>(
+        this: this & { results: Results<B> },
+        by: A
+    ) {
+        return Object.entries(this.results).sort((a, b) => b[1][by] - a[1][by]);
     }
 
     public getTotalScoresFor(
         candidates: Candidate[]
     ): this & { results: Results<DataWith<'score'>> } {
-        const results = new Map<number, DataWith<'score'>>();
+        const results = {} as Results<DataWith<'score'>>;
 
         for (const candidate of candidates) {
             const totalScore = Object.entries(candidate.score).reduce((acc, entry) => {
@@ -47,7 +49,7 @@ export class ElectionResultsBuilder {
                 return acc + value * weight;
             }, 0);
 
-            results.set(candidate.id, { score: totalScore });
+            results[candidate.id] = { score: totalScore };
         }
 
         console.log(results);
@@ -56,10 +58,9 @@ export class ElectionResultsBuilder {
 
     public randomize(this: this & { results: Results<DataWith<'score'>> }) {
         //We need this cause otherwise the reference of this.results is copied into results instead of just contents => source of bugs
-        //         const results = structuredClone(this.results);
-        const results = new Map(this.results);
+        const results = structuredClone(this.results);
 
-        for (const [id, data] of results) {
+        for (const [id, data] of Object.entries(results)) {
             const { score } = data;
 
             const random = Math.random();
@@ -77,7 +78,7 @@ export class ElectionResultsBuilder {
                 modified -= 0.07 * score;
             }
 
-            results.set(id, { ...data, score: modified });
+            results[id] = { ...data, score: modified };
         }
 
         console.log(results);
@@ -85,12 +86,12 @@ export class ElectionResultsBuilder {
     }
 
     public normalize(this: this & { results: Results<DataWith<'score'>> }) {
-        const results = new Map(this.results);
+        const results = structuredClone(this.results);
 
-        for (const [id, data] of results) {
+        for (const [id, data] of Object.entries(results)) {
             const { score } = data;
 
-            results.set(id, { ...data, score: score / this.sumOf('score') });
+            results[id] = { ...data, score: score / this.sumOf('score') };
         }
 
         console.log(results);
@@ -109,9 +110,9 @@ export class ElectionResultsBuilder {
         let hasFreeVotes = true;
         let freeVotes = votingPool;
 
-        const results = new Map<number, FullData>();
+        const results = {} as Results<Required<Data>>;
 
-        for (const [id, data] of this.sortedBy('score')) {
+        for (const [id, data] of this.sortBy('score')) {
             const { score } = data;
             // ADDRESSED:
             // if votingPool is 1 and score for every candidate is less than 0.5 then everyone will get 0 votes
@@ -140,14 +141,14 @@ export class ElectionResultsBuilder {
 
             const percentage = (votes / votingPool) * 100;
 
-            results.set(id, { ...data, popularVote: votes, percentage });
+            results[id] = { ...data, popularVote: votes, percentage };
         }
 
         console.log(results);
         return Object.assign(this, { results });
     }
 
-    public async save(this: this & { results: Results<FullData> }, electionId: number) {
+    public async save(this: this & { results: Results<Required<Data>> }, electionId: number) {
         const heldElectionId = await heldElectionRepo.create({
             created_at: new Date(),
             election_id: electionId,
@@ -155,7 +156,7 @@ export class ElectionResultsBuilder {
 
         const promises = [];
 
-        for (const [id, fields] of this.results) {
+        for (const [id, fields] of Object.entries(this.results)) {
             const { popularVote, percentage } = fields;
 
             promises.push(
@@ -163,7 +164,7 @@ export class ElectionResultsBuilder {
                     percentage: percentage,
                     popular_vote: popularVote,
                     created_at: new Date(),
-                    candidate_id: id,
+                    candidate_id: parseInt(id),
                     held_election_id: heldElectionId,
                 })
             );

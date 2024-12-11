@@ -48,5 +48,6 @@
 		}
 	},
 	"candidate": "candidate ☑️",
-	"winner": "winner"
+	"winner": "winner",
+	"loser": "loser"
 }
