@@ -5,9 +5,11 @@ import { PartialNull } from '@/models/utility-types.js';
 export interface HeldElectionTable {
     id: Generated<number>;
     created_at: ColumnType<Date, Date, never>;
+    //status???? rename to active election???
     election_id: number;
 }
 
+//incorrect type
 export type HeldElection = Selectable<
     HeldElectionTable &
         PartialNull<

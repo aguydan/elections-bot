@@ -16,6 +16,7 @@ import {
     StringSelectMenu,
 } from './components/menus/index.js';
 import { Button, HoldElectionButton } from './components/buttons/index.js';
+import { StateName } from './services/state-service.js';
 
 //по умолчанию загрузить json конфиг в es6 модуль нельзя,
 //но можно воспольщоваться commonjs функцией require, создав её es6 вариант
@@ -29,6 +30,7 @@ async function start(): Promise<void> {
     });
 
     const stateService = new StateService();
+    stateService.init(StateName.Election);
 
     const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
     const menus: StringSelectMenu[] = [new PickElectionMenu(), new PickCandidatesMenu()];

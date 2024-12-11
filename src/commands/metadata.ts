@@ -40,8 +40,8 @@ export const ChatCommandMetadata: {
                 type: 3,
                 required: true,
                 choices: [
-                    { name: 'increment', value: 'incr' },
-                    { name: 'decrement', value: 'decr' },
+                    { name: '+', value: '+' },
+                    { name: '-', value: '-' },
                 ],
             },
             {

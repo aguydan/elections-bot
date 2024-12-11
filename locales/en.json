@@ -23,18 +23,30 @@
 		"candidatesPicked": {
 			"title": "NOMINEES ANNOUNCED",
 			"description": "After heated party discussions and daring moves from certain individuals, the list of nominess for the upcoming election was presented by the {commission}"
+		},
+		"countingBallots": {
+			"title": "embeds.countingBallots.title",
+			"description": "embeds.countingBallots.description"
+		},
+		"results": {
+			"title": "embeds.results.title",
+			"withoutImage": {
+				"description": "embeds.results.withoutImage.description"
+			}
 		}
 	},
 	"dashCommands": {
 		"cancel": "The election was cancelled"
 	},
 	"errors": {
-		"noChannel": "Channel doesn't exist on interaction {id}"
+		"noChannel": "Channel doesn't exist on interaction {id}",
+		"stateLacksData": "State: {state}, value: {value} - lacks data needed to procced"
 	},
 	"buttons": {
 		"holdElection": {
 			"label": "Hold election"
 		}
 	},
-	"candidate": "candidate ☑️"
+	"candidate": "candidate ☑️",
+	"winner": "winner"
 }

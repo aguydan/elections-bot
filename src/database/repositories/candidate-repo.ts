@@ -1,7 +1,6 @@
 import { Repo } from './index.js';
 import { Kysely } from 'kysely';
 import { Candidate, CandidateUpdate, Database, NewCandidate } from '../schema/index.js';
-import { CandidateScore } from '../schema/candidate.js';
 
 export class CandidateRepo implements Repo {
     //check id function??
@@ -57,7 +56,7 @@ export class CandidateRepo implements Repo {
         return Number(result.numUpdatedRows);
     }
 
-    public async updateScore(id: number, score: CandidateScore): Promise<number> {
+    public async updateScore(id: number, score: Record<string, number>): Promise<number> {
         const result = await this.db
             .updateTable('candidate')
             .set({

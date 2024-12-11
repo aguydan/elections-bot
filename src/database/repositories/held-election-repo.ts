@@ -33,14 +33,18 @@ export class HeldElectionRepo implements Repo {
         return heldElection;
     }
 
-    public async create(data: NewHeldElection): Promise<number | undefined> {
+    public async create(data: NewHeldElection): Promise<number> {
         const heldElection = await this.db
             .insertInto('held_election')
             .values(data)
             .returning('id')
             .executeTakeFirst();
 
-        return heldElection?.id;
+        if (!heldElection) {
+            throw new Error('Something went wrong while inserting data');
+        }
+
+        return heldElection.id;
     }
 
     public async delete(id: number): Promise<number> {

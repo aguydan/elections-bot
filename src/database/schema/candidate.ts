@@ -1,6 +1,6 @@
 import { ColumnType, Generated, Insertable, JSONColumnType, Selectable, Updateable } from 'kysely';
 
-export interface CandidateScore {
+/* export interface CandidateScore {
     gdp: number;
     party_relevance: number;
     program_relevance: number;
@@ -13,7 +13,7 @@ export interface CandidateScore {
     devout_support: number;
     capital_favorite: number;
     propaganda_campaign: number;
-}
+} */
 
 export interface CandidateTable {
     id: Generated<number>;
@@ -23,7 +23,7 @@ export interface CandidateTable {
     running_mate: string | null;
     party: string | null;
     image_url: string | null;
-    score: JSONColumnType<CandidateScore>;
+    score: JSONColumnType<Record<string, number>>;
     created_at: ColumnType<Date, never, never>;
     updated_at: ColumnType<Date | null, never, Date>;
 }

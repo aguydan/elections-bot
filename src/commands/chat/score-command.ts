@@ -7,45 +7,44 @@ import {
 import { Command } from '../index.js';
 import { InteractionUtils } from '@/utils/interaction-utils.js';
 import { candidateRepo } from '@/database/database.js';
-import { CandidateScore } from '@/database/schema/candidate.js';
 
 export class ScoreCommand implements Command {
     public names = ['score'];
 
     public async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        //rename to args or get rid of them, confuse with real options a lot
         const DEFAULT_VALUE = 0.05;
 
         const args = {
-            scoreParameter: interaction.options.getString(
-                'score_parameter'
-            ) as keyof CandidateScore,
+            scoreParameter: interaction.options.getString('score_parameter'),
             operation: interaction.options.getString('operation'),
             value: interaction.options.getInteger('value'),
         };
 
-        const id = interaction.options.get('candidate')?.value as number | undefined;
-
+        const id = interaction.options.get('candidate')?.value as number | null;
         if (!id) {
             throw new Error('no candidate provided');
         }
 
         const { score } = await candidateRepo.getById(id);
 
-        const prev = score[args.scoreParameter];
+        const prev = score[args.scoreParameter!];
+        if (!prev) {
+            throw new Error('No such score parameter as: ' + args.scoreParameter);
+        }
+
         const value = args.value ? args.value / 100 : DEFAULT_VALUE;
 
         let curr = 0;
 
-        if (args.operation == 'increment') {
+        if (args.operation == '+') {
             curr = prev + value;
         }
 
-        if (args.operation == 'decrement') {
+        if (args.operation == '-') {
             curr = prev - value;
         }
 
-        score[args.scoreParameter] = parseFloat(Math.max(0, Math.min(curr, 100)).toFixed(2));
+        score[args.scoreParameter!] = parseFloat(Math.max(0, Math.min(curr, 100)).toFixed(2));
 
         await candidateRepo.updateScore(id, score);
 

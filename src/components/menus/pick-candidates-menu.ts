@@ -22,12 +22,12 @@ export class PickCandidatesMenu implements StringSelectMenu {
     ): Promise<void> {
         const stateId = RegexUtils.getStateId(prevInteraction.customId);
 
-        const id = 'hold-election-button-' + stateId;
+        const buttonId = 'hold-election-button-' + stateId;
 
         const button = new ActionRowBuilder<ButtonBuilder>({
             components: [
                 new ButtonBuilder({
-                    custom_id: id,
+                    custom_id: buttonId,
                     label: i18n.__('buttons.holdElection.label'),
                     style: ButtonStyle.Primary,
                 }),
@@ -60,7 +60,7 @@ export class PickCandidatesMenu implements StringSelectMenu {
 
         const buttonCollector = CollectorUtils.createComponentCollector(
             prevInteraction,
-            id,
+            buttonId,
             ComponentType.Button
         );
 

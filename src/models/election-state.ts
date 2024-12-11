@@ -5,4 +5,4 @@ export type ElectionStateValue = {
     candidates?: Candidate[];
 };
 
-export type ElectionState = Record<string, ElectionStateValue>;
+export type ElectionState = Map<string, ElectionStateValue>;

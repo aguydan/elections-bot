@@ -23,6 +23,16 @@
 		"candidatesPicked": {
 			"title": "КАНДИДАТЫ НОМИНИРОВАНЫ",
 			"description": "После жарких партийных дискуссий и смелых шагов отдельных людей комиссия {commission} представила список кандидатов на предстоящие выборы"
+		},
+		"countingBallots": {
+			"title": "embeds.countingBallots.title",
+			"description": "embeds.countingBallots.description"
+		},
+		"results": {
+			"title": "embeds.results.title",
+			"withoutImage": {
+				"description": "embeds.results.withoutImage.description"
+			}
 		}
 	},
 	"dashCommands": {
@@ -33,5 +43,6 @@
 			"label": "Провести выборы"
 		}
 	},
-	"candidate": "кандидат ☑️"
+	"candidate": "кандидат ☑️",
+	"winner": "winner"
 }

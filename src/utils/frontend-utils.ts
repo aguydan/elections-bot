@@ -22,7 +22,7 @@ export class FrontendUtils {
 
             return Buffer.from(screenshot);
         } catch (error) {
-            console.error(error);
+            console.error('Error while trying to take a screenshot: ' + error);
 
             return null;
         } finally {

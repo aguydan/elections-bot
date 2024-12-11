@@ -5,6 +5,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');
 
+type Results<T> = Map<number, T>;
+
 type Data = {
     score?: number;
     popularVote?: number;
@@ -14,42 +16,38 @@ type Data = {
 type FullData = Required<Data>;
 type DataWith<T extends keyof FullData> = Data & Pick<FullData, T>;
 
-type Results<T> = Record<number, T>;
-
 export class ElectionResultsBuilder {
-    public results: Results<Data>;
+    public results = new Map<number, Data>();
 
-    constructor() {
-        this.results = {};
-    }
-
-    private getSumOf<T extends keyof Data>(
+    public sumOf<T extends keyof Data>(
         this: this & { results: Results<DataWith<T>> },
         of: T
     ): number {
-        return Object.values(this.results).reduce((acc, result) => acc + result[of], 0);
+        return [...this.results].reduce((acc, result) => acc + result[1][of], 0);
     }
 
-    private getSortedBy<T extends keyof Data>(
-        this: this & { results: Results<DataWith<T>> },
-        by: T
-    ) {
-        return Object.entries(this.results).sort((a, b) => b[1][by] - a[1][by]);
+    public sortedBy<T extends keyof Data>(this: this & { results: Results<DataWith<T>> }, by: T) {
+        return new Map([...this.results].sort((a, b) => b[1][by] - a[1][by]));
     }
 
     public getTotalScoresFor(
         candidates: Candidate[]
     ): this & { results: Results<DataWith<'score'>> } {
-        const results: Results<DataWith<'score'>> = {};
+        const results = new Map<number, DataWith<'score'>>();
 
         for (const candidate of candidates) {
             const totalScore = Object.entries(candidate.score).reduce((acc, entry) => {
-                const [label, value] = entry;
+                const [param, value] = entry;
 
-                return acc + value * Config.candidateScoreWeights[label];
+                const weight = Config.candidateScoreWeights[param];
+                if (!weight) {
+                    throw new Error('no weight defined for score parameter: ' + param);
+                }
+
+                return acc + value * weight;
             }, 0);
 
-            results[candidate.id] = { score: totalScore };
+            results.set(candidate.id, { score: totalScore });
         }
 
         console.log(results);
@@ -58,9 +56,10 @@ export class ElectionResultsBuilder {
 
     public randomize(this: this & { results: Results<DataWith<'score'>> }) {
         //We need this cause otherwise the reference of this.results is copied into results instead of just contents => source of bugs
-        const results = structuredClone(this.results);
+        //         const results = structuredClone(this.results);
+        const results = new Map(this.results);
 
-        for (const [id, data] of Object.entries(results)) {
+        for (const [id, data] of results) {
             const { score } = data;
 
             const random = Math.random();
@@ -78,7 +77,7 @@ export class ElectionResultsBuilder {
                 modified -= 0.07 * score;
             }
 
-            results[parseInt(id)] = { ...data, score: modified };
+            results.set(id, { ...data, score: modified });
         }
 
         console.log(results);
@@ -86,12 +85,12 @@ export class ElectionResultsBuilder {
     }
 
     public normalize(this: this & { results: Results<DataWith<'score'>> }) {
-        const results = structuredClone(this.results);
+        const results = new Map(this.results);
 
-        for (const [id, data] of Object.entries(results)) {
+        for (const [id, data] of results) {
             const { score } = data;
 
-            results[parseInt(id)] = { ...data, score: score / this.getSumOf('score') };
+            results.set(id, { ...data, score: score / this.sumOf('score') });
         }
 
         console.log(results);
@@ -110,9 +109,9 @@ export class ElectionResultsBuilder {
         let hasFreeVotes = true;
         let freeVotes = votingPool;
 
-        const results: Results<FullData> = {};
+        const results = new Map<number, FullData>();
 
-        for (const [id, data] of this.getSortedBy('score')) {
+        for (const [id, data] of this.sortedBy('score')) {
             const { score } = data;
             // ADDRESSED:
             // if votingPool is 1 and score for every candidate is less than 0.5 then everyone will get 0 votes
@@ -141,7 +140,7 @@ export class ElectionResultsBuilder {
 
             const percentage = (votes / votingPool) * 100;
 
-            results[parseInt(id)] = { ...data, popularVote: votes, percentage };
+            results.set(id, { ...data, popularVote: votes, percentage });
         }
 
         console.log(results);
@@ -154,13 +153,9 @@ export class ElectionResultsBuilder {
             election_id: electionId,
         });
 
-        if (!heldElectionId) {
-            throw new Error('Held election failed to record to database');
-        }
-
         const promises = [];
 
-        for (const [id, fields] of Object.entries(this.results)) {
+        for (const [id, fields] of this.results) {
             const { popularVote, percentage } = fields;
 
             promises.push(
@@ -168,7 +163,7 @@ export class ElectionResultsBuilder {
                     percentage: percentage,
                     popular_vote: popularVote,
                     created_at: new Date(),
-                    candidate_id: parseInt(id),
+                    candidate_id: id,
                     held_election_id: heldElectionId,
                 })
             );
