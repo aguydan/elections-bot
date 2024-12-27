@@ -4,7 +4,6 @@ import { Request, Response, Router } from 'express';
 import { candidateRepo } from '@/database/database.js';
 
 //maybe I should create base controller in the future!
-
 export class CandidatesController implements Controller {
     public path = '/candidates';
     public router: Router = PromiseRouter();
@@ -13,6 +12,7 @@ export class CandidatesController implements Controller {
 
     public register(): void {
         this.router.get('/', (req, res) => this.getCandidates(req, res));
+        this.router.get('/count', (_, res) => this.countCandidates(res));
         this.router.get('/:candidateId', (req, res) => this.getCandidateById(req, res));
         this.router.post('/', (req, res) => this.createCandidate(req, res));
         this.router.put('/:candidateId', (req, res) => this.updateCandidate(req, res));
@@ -22,7 +22,17 @@ export class CandidatesController implements Controller {
     }
 
     private async getCandidates(req: Request, res: Response): Promise<void> {
-        res.status(200).json(await candidateRepo.getAll());
+        if (Object.keys(req.query).length === 0) {
+            res.status(200).json(await candidateRepo.getAll());
+
+            return;
+        }
+
+        res.status(200).json(await candidateRepo.getSome(req.query));
+    }
+
+    private async countCandidates(res: Response): Promise<void> {
+        res.status(200).json(await candidateRepo.count());
     }
 
     private async getCandidateById(req: Request, res: Response): Promise<void> {
@@ -32,7 +42,7 @@ export class CandidatesController implements Controller {
     }
 
     private async createCandidate(req: Request, res: Response): Promise<void> {
-        res.status(200).json(await candidateRepo.create(req.body));
+        res.status(201).json(await candidateRepo.create(req.body));
     }
 
     private async updateCandidate(req: Request, res: Response): Promise<void> {

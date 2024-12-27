@@ -97,7 +97,7 @@ export class PickElectionMenu implements StringSelectMenu {
                     fields: filtered.map(candidate => {
                         return {
                             name: i18n.__('candidate'),
-                            value: candidate.name,
+                            value: `**${candidate.name}**`,
                             inline: true,
                         };
                     }),

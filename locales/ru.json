@@ -32,6 +32,9 @@
 			"title": "embeds.results.title",
 			"withoutImage": {
 				"description": "embeds.results.withoutImage.description"
+			},
+			"withImage": {
+				"description": "embeds.results.withImage.description"
 			}
 		}
 	},

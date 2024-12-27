@@ -12,6 +12,13 @@ import {
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');
 
+/*
+ * This is needed because database queries return
+ * NUMERIC fields as strings by default instead of numbers
+ */
+const types = pg.types;
+types.setTypeParser(types.builtins.NUMERIC, value => parseFloat(value));
+
 const dialect = new PostgresDialect({
     pool: new pg.Pool({
         ...Config.database,

@@ -56,8 +56,6 @@ export class HoldElectionButton implements Button {
 
         const results = builder.sortBy('percentage');
 
-        console.log(results);
-
         const withResults = results.map(result => {
             const [id, data] = result;
             const candidate = candidates.find(candidate => candidate.id === parseInt(id));

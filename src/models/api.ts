@@ -16,7 +16,7 @@ export class API {
 
     constructor(public controllers: Controller[]) {
         this.app = express();
-        this.app.use(cors({ origin: FRONTEND_PATH }));
+        this.app.use(cors({ origin: '*' }));
         this.app.use(express.json());
         this.app.use(express.static(staticDir));
         this.setupControllers();

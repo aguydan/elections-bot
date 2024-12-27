@@ -18,7 +18,13 @@ export class FrontendUtils {
             await page.setViewport({ width: 1920, height: 1080 });
 
             await page.goto(path, { waitUntil: 'networkidle0' });
-            const screenshot = await page.screenshot();
+
+            const handle = await page.$('#screenshotable');
+            if (!handle) {
+                throw new Error('No element containing the results was found');
+            }
+
+            const screenshot = await handle.screenshot();
 
             return Buffer.from(screenshot);
         } catch (error) {

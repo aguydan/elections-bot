@@ -28,7 +28,7 @@ export class ScoreCommand implements Command {
         const { score } = await candidateRepo.getById(id);
 
         const prev = score[args.scoreParameter!];
-        if (!prev) {
+        if (prev === undefined || prev === null) {
             throw new Error('No such score parameter as: ' + args.scoreParameter);
         }
 

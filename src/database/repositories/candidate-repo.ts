@@ -10,6 +10,39 @@ export class CandidateRepo implements Repo {
         return await this.db.selectFrom('candidate').selectAll().execute();
     }
 
+    //this looks like a general search function but without likes or regexp so theres room for improvement
+    public async getSome(
+        params: { limit?: number; offset?: number } & Partial<Candidate>
+    ): Promise<Candidate[]> {
+        if (!params.limit) {
+            console.warn('Limit was not provided');
+        }
+
+        const limit = params.limit ?? 0;
+        const offset = params.offset ?? 0;
+
+        return await this.db
+            .selectFrom('candidate')
+            .selectAll()
+            .orderBy('name asc')
+            .limit(limit)
+            .offset(offset)
+            .execute();
+    }
+
+    public async count(): Promise<{ count: number | string | bigint }> {
+        const count = await this.db
+            .selectFrom('candidate')
+            .select(({ fn }) => fn.count('id').as('count'))
+            .executeTakeFirst();
+
+        if (!count) {
+            return { count: 0 };
+        }
+
+        return count;
+    }
+
     public async getById(id: number): Promise<Candidate> {
         if (Number.isNaN(id)) {
             throw new Error('Invalid ID in request parameter. Must be an integer.');
@@ -28,6 +61,7 @@ export class CandidateRepo implements Repo {
         return candidate;
     }
 
+    //replace this with the general getSome function at the beginning
     public async searchByName(name: string): Promise<Pick<Candidate, 'id' | 'name'>[]> {
         return await this.db
             .selectFrom('candidate')
