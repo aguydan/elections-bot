@@ -1,5 +1,6 @@
 import { electionResultRepo, heldElectionRepo } from '@/database/database.js';
 import { Candidate, Election } from '@/database/schema/index.js';
+import { log } from 'console';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -15,6 +16,7 @@ type AccumulatedScoreData = {
 type CompleteData = AccumulatedScoreData & {
   popularVote: number;
   percentage: number;
+  remainder: number;
 };
 
 /* type DataWith<A extends keyof PartialData> = PartialData &
@@ -128,6 +130,7 @@ export class ElectionResultsBuilder<T extends PartialData> {
     return this;
   }
 
+  // Utilizes the largest remainder method, sort of: https://en.wikipedia.org/wiki/Quota_method
   public calculateResults(
     this: ElectionResultsBuilder<AccumulatedScoreData>,
     election: Election
@@ -140,41 +143,49 @@ export class ElectionResultsBuilder<T extends PartialData> {
       throw new Error('elections cannot proceed because no one showed up');
     }
 
-    let hasFreeVotes = true;
-    let freeVotes = votingPool;
+    let remainigVotes = votingPool;
 
-    this.results = this.results.map(data => {
+    const results = this.results.map(data => {
       const { score } = data;
-      // ADDRESSED:
-      // if votingPool is 1 and score for every candidate is less than 0.5 then everyone will get 0 votes
-      let votes = hasFreeVotes ? Math.round(votingPool * score) : 0;
 
-      if (votes === 0 && hasFreeVotes) {
-        votes = 1;
-      }
+      const votes = votingPool * score;
+      const wholeVotes = Math.floor(votes);
+      const remainder = votes - wholeVotes;
 
-      freeVotes -= votes;
-
-      /*
-       * Sometimes due to rounding one nonexistent vote ends up
-       * being added to the candidate who lost the most.
-       *
-       * This here ensures that whatever is added is immediately
-       * substracted from the final bunch of votes so that in total
-       * all votes are exactly the same as the votingPool number
-       */
-      if (freeVotes <= 0) {
-        votes += freeVotes;
-        freeVotes = 0;
-
-        hasFreeVotes = false;
-      }
-
-      const percentage = (votes / votingPool) * 100;
+      remainigVotes -= wholeVotes;
 
       return {
         ...data,
-        popularVote: votes,
+        popularVote: wholeVotes,
+        remainder,
+      };
+    });
+
+    // Sort based on the largest remainder
+    results.sort((a, b) => b.remainder - a.remainder);
+
+    let resultIndex = 0;
+
+    // Iterate over results until every unallocated vote is allocated
+    while (remainigVotes) {
+      if (resultIndex === results.length) {
+        resultIndex = 0;
+      }
+
+      results[resultIndex]!.popularVote++;
+
+      resultIndex++;
+      remainigVotes--;
+    }
+
+    // Calculate percentages
+    this.results = results.map(data => {
+      const { popularVote } = data;
+
+      const percentage = (popularVote / votingPool) * 100;
+
+      return {
+        ...data,
         percentage,
       };
     });
