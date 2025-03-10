@@ -4,7 +4,6 @@ import express, { Express } from 'express';
 import { createRequire } from 'node:module';
 import util from 'node:util';
 import cors from 'cors';
-import { FRONTEND_PATH } from '@/constants/frontend.js';
 
 const require = createRequire(import.meta.url);
 const Config = require('../../config/config.json');

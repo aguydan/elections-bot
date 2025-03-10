@@ -1,4 +1,5 @@
 {
+  "$schema": "https://swc.rs/schema.json",
   "jsc": {
     "parser": {
       "syntax": "typescript"
@@ -12,6 +13,5 @@
   "module": {
     "type": "es6",
     "resolveFully": true
-  },
-  "sourceMaps": true
+  }
 }
