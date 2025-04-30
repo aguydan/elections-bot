@@ -1,7 +1,4 @@
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const Config = require('../../config/config.json');
+import Config from '@/../config/config.json';
 
 const { protocol, hostname, port, uploadsDir } = Config.api;
 

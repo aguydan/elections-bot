@@ -61,10 +61,13 @@ export class HoldElectionButton implements Button {
 
     await builder.save(election.id);
 
-    const results = builder.sortBy('percentage');
+    const results = builder.results;
+    results.sort((a, b) => b.percentage - a.percentage);
 
-    const withResults = results.map(data => {
-      const candidate = candidates.find(candidate => candidate.id === data.id);
+    const withCandidates = results.map((data) => {
+      const candidate = candidates.find(
+        (candidate) => candidate.id === data.id
+      );
 
       if (!candidate) {
         throw new Error('No result data for a candidate with id: ' + data.id);
@@ -76,13 +79,8 @@ export class HoldElectionButton implements Button {
       };
     });
 
-    //???????
-    /*         if (tookPart.length < 2) {
-            throw new Error('This shouldnt even happen');
-        } */
-
-    const winner = withResults[0]!;
-    const losers = withResults.slice(1);
+    const winner = withCandidates[0]!;
+    const losers = withCandidates.slice(1);
 
     stateService.delete(StateName.Election, stateId);
 
@@ -147,7 +145,7 @@ export class HoldElectionButton implements Button {
           value: `**${winner.name}** ${winner.percentage.toFixed(2)}% (${winner.popularVote} votes)`,
           inline: false,
         },
-        ...losers.map(loser => ({
+        ...losers.map((loser) => ({
           name: i18n.__('loser'),
           value: `**${loser.name}** ${loser.percentage.toFixed(2)}% (${loser.popularVote} votes)`,
           inline: true,

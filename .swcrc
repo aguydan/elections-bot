@@ -4,14 +4,13 @@
     "parser": {
       "syntax": "typescript"
     },
-    "target": "es2022",
+    "target": "esnext",
     "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "module": {
-    "type": "es6",
-    "resolveFully": true
+    "type": "nodenext"
   }
 }

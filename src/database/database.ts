@@ -1,32 +1,29 @@
 import pg from 'pg';
 import { Kysely, PostgresDialect } from 'kysely';
-import { createRequire } from 'node:module';
 import { Database } from './schema/index.js';
 import {
-    CandidateRepo,
-    ElectionRepo,
-    ElectionResultRepo,
-    HeldElectionRepo,
+  CandidateRepo,
+  ElectionRepo,
+  ElectionResultRepo,
+  HeldElectionRepo,
 } from './repositories/index.js';
-
-const require = createRequire(import.meta.url);
-const Config = require('../../config/config.json');
+import Config from '@/../config/config.json';
 
 /*
  * This is needed because database queries return
  * NUMERIC fields as strings by default instead of numbers
  */
 const types = pg.types;
-types.setTypeParser(types.builtins.NUMERIC, value => parseFloat(value));
+types.setTypeParser(types.builtins.NUMERIC, (value) => parseFloat(value));
 
 const dialect = new PostgresDialect({
-    pool: new pg.Pool({
-        ...Config.database,
-    }),
+  pool: new pg.Pool({
+    ...Config.database,
+  }),
 });
 
 export const db = new Kysely<Database>({
-    dialect,
+  dialect,
 });
 
 export const candidateRepo = new CandidateRepo(db);

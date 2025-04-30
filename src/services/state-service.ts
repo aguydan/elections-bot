@@ -1,83 +1,46 @@
-import { ElectionState, ElectionStateValue } from '@/models/election-state.js';
 import { RegexUtils } from '@/utils/regex-utils.js';
 
-export enum StateName {
-    Election = 'Election',
-}
+export class StateService<State extends Record<string, any>> {
+  private _initialState: State;
+  private _stateMap = new Map<string, State>();
 
-type StateKind = ElectionState;
+  constructor(initialState: State) {
+    this._initialState = initialState;
+  }
 
-type StateNameToValueType = {
-    [StateName.Election]: ElectionStateValue;
-};
+  public set(id: string, callback: (prev: State) => State): void;
+  public set(id: string, newStateValue: State): void;
+  public set(
+    id: string,
+    newStateValue: State | ((prev: State) => State)
+  ): void {
+    const uuid = RegexUtils.getStateId(id);
+    let value = this._stateMap.get(uuid) ?? this._initialState;
 
-export class StateService {
-    private states = new Map<StateName, StateKind>();
-
-    public init(name: StateName) {
-        this.states.set(name, new Map());
+    if (typeof newStateValue === 'function') {
+      value = newStateValue(value);
+    } else {
+      value = newStateValue;
     }
 
-    public set<T extends StateName>(
-        name: T,
-        id: string,
-        callback: (prev: StateNameToValueType[T]) => StateNameToValueType[T]
-    ): void;
-    public set<T extends StateName>(
-        name: T,
-        id: string,
-        newStateValue: StateNameToValueType[T]
-    ): void;
-    public set<T extends StateName>(
-        name: T,
-        id: string,
-        newStateValue:
-            | StateNameToValueType[T]
-            | ((prev: StateNameToValueType[T]) => StateNameToValueType[T])
-    ): void {
-        const prevState = this.states.get(name);
+    this._stateMap.set(uuid, value);
+  }
 
-        if (!prevState) {
-            throw new Error(`Requested state ${name} wasnt initialized. see init method`);
-        }
+  public get(id: string): State {
+    const uuid = RegexUtils.getStateId(id);
 
-        const uuid = RegexUtils.getStateId(id);
-        let value = prevState.get(uuid) ?? {};
+    const value = this._stateMap.get(uuid);
 
-        if (typeof newStateValue === 'function') {
-            value = newStateValue(value);
-        } else {
-            value = newStateValue;
-        }
-
-        prevState.set(uuid, value);
+    if (!value) {
+      throw new Error(`State entry with uuid ${uuid} doesn't exist.`);
     }
 
-    public get<T extends StateName>(name: T, id: string): StateNameToValueType[T] {
-        const state = this.states.get(name);
+    return value;
+  }
 
-        if (!state) {
-            throw new Error(
-                `Requested state ${name} wasnt initialized during StateService creation`
-            );
-        }
+  public delete(id: string): void {
+    const uuid = RegexUtils.getStateId(id);
 
-        const uuid = RegexUtils.getStateId(id);
-
-        return state.get(uuid) ?? {};
-    }
-
-    public delete(name: StateName, id: string): void {
-        const state = this.states.get(name);
-
-        if (!state) {
-            throw new Error(
-                `Requested state ${name} wasnt initialized during StateService creation`
-            );
-        }
-
-        const uuid = RegexUtils.getStateId(id);
-
-        state.delete(uuid);
-    }
+    this._stateMap.delete(uuid);
+  }
 }

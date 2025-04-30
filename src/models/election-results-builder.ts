@@ -1,10 +1,6 @@
 import { electionResultRepo, heldElectionRepo } from '@/database/database.js';
 import { Candidate, Election } from '@/database/schema/index.js';
-import { log } from 'console';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const Config = require('../../config/config.json');
+import Config from '@/../config/config.json';
 
 type PartialData = Partial<CompleteData>;
 
@@ -36,16 +32,18 @@ type CompleteData = AccumulatedScoreData & {
       }
   : never; */
 
-type InferKeys<T> = T extends AccumulatedScoreData
+/* type InferKeys<T> = T extends AccumulatedScoreData
   ? T extends CompleteData
     ? keyof CompleteData
     : keyof AccumulatedScoreData
-  : never;
+  : never; */
 
 export class ElectionResultsBuilder<T extends PartialData> {
-  public results: T[] = [];
+  constructor(public results: T[] = []) {}
 
-  public sumOf<A extends AccumulatedScoreData>(
+  //   public results: T[] = [];
+
+  /*   public sumOf<A extends AccumulatedScoreData>(
     this: ElectionResultsBuilder<A>,
     of: InferKeys<T>
   ) {
@@ -59,10 +57,10 @@ export class ElectionResultsBuilder<T extends PartialData> {
     by: InferKeys<T>
   ) {
     return this.results.sort((a, b) => b[by] - a[by]);
-  }
+  } */
 
   public accumulateRawScores(candidates: Candidate[]) {
-    const accumulated = candidates.map(candidate => {
+    const accumulated = candidates.map((candidate) => {
       const score = Object.entries(candidate.score).reduce((sum, entry) => {
         const [param, value] = entry;
 
@@ -82,13 +80,11 @@ export class ElectionResultsBuilder<T extends PartialData> {
       };
     });
 
-    this.results = accumulated as T[];
-
-    return this as ElectionResultsBuilder<AccumulatedScoreData>;
+    return new ElectionResultsBuilder<AccumulatedScoreData>(accumulated);
   }
 
   public randomizeScores(this: ElectionResultsBuilder<AccumulatedScoreData>) {
-    this.results = this.results.map(data => {
+    const results = this.results.map((data) => {
       const { score } = data;
 
       const random = Math.random();
@@ -112,20 +108,25 @@ export class ElectionResultsBuilder<T extends PartialData> {
       };
     });
 
+    this.results = results;
+
     return this;
   }
 
   public normalizeScores(this: ElectionResultsBuilder<AccumulatedScoreData>) {
-    const sum = this.sumOf('score');
+    const sumOfScores =
+      this.results.reduce((sum, data) => sum + data.score, 0) || 1;
 
-    this.results = this.results.map(data => {
+    const results = this.results.map((data) => {
       const { score } = data;
 
       return {
         ...data,
-        score: score / sum,
+        score: score / sumOfScores,
       };
     });
+
+    this.results = results;
 
     return this;
   }
@@ -143,16 +144,16 @@ export class ElectionResultsBuilder<T extends PartialData> {
       throw new Error('elections cannot proceed because no one showed up');
     }
 
-    let remainigVotes = votingPool;
+    let remainingVotes = votingPool;
 
-    const results = this.results.map(data => {
+    const results = this.results.map((data) => {
       const { score } = data;
 
       const votes = votingPool * score;
       const wholeVotes = Math.floor(votes);
       const remainder = votes - wholeVotes;
 
-      remainigVotes -= wholeVotes;
+      remainingVotes -= wholeVotes;
 
       return {
         ...data,
@@ -164,33 +165,24 @@ export class ElectionResultsBuilder<T extends PartialData> {
     // Sort based on the largest remainder
     results.sort((a, b) => b.remainder - a.remainder);
 
-    let resultIndex = 0;
+    // Distribute remaining votes and calculate percentages
+    const toEach = Math.floor(remainingVotes / results.length);
+    let remainder = remainingVotes % results.length;
 
-    // Iterate over results until every unallocated vote is allocated
-    while (remainigVotes) {
-      if (resultIndex === results.length) {
-        resultIndex = 0;
-      }
-
-      results[resultIndex]!.popularVote++;
-
-      resultIndex++;
-      remainigVotes--;
-    }
-
-    // Calculate percentages
-    this.results = results.map(data => {
+    const complete = results.map((data) => {
       const { popularVote } = data;
 
-      const percentage = (popularVote / votingPool) * 100;
+      const finalVote = popularVote + toEach + Math.max(0, remainder--);
+      const percentage = (finalVote / votingPool) * 100;
 
       return {
         ...data,
+        popularVote: finalVote,
         percentage,
       };
     });
 
-    return this as ElectionResultsBuilder<CompleteData>;
+    return new ElectionResultsBuilder<CompleteData>(complete);
   }
 
   //this logic shouldnt be here
@@ -205,7 +197,7 @@ export class ElectionResultsBuilder<T extends PartialData> {
 
     try {
       Promise.all(
-        this.results.map(data => {
+        this.results.map((data) => {
           const { id, popularVote, percentage } = data;
 
           return electionResultRepo.create({
