@@ -2,7 +2,7 @@ import {
   ApplicationCommandType,
   RESTPostAPIApplicationCommandsJSONBody,
 } from 'discord.js';
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
 
 export const ChatCommandMetadata: {
   [command: string]: RESTPostAPIApplicationCommandsJSONBody;

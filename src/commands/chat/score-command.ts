@@ -9,7 +9,7 @@ import { InteractionUtils } from '@/utils/interaction-utils.js';
 import { candidateRepo } from '@/database/database.js';
 
 export class ScoreCommand implements Command {
-  public names = ['score'];
+  public name = 'score';
 
   public async execute(
     interaction: ChatInputCommandInteraction

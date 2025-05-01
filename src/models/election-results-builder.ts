@@ -1,6 +1,6 @@
 import { electionResultRepo, heldElectionRepo } from '@/database/database.js';
 import { Candidate, Election } from '@/database/schema/index.js';
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
 
 type PartialData = Partial<CompleteData>;
 

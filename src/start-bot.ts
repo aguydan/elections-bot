@@ -1,11 +1,10 @@
 import { Client, REST } from 'discord.js';
-import { CommandRegistrationService, StateService } from './services/index.js';
+import { CommandRegistrationService } from './services/index.js';
 import { Bot } from './models/bot.js';
 import { ChatCommandMetadata, Command } from './commands/index.js';
 import {
   ButtonHandler,
   CommandHandler,
-  MessageHandler,
   StringSelectMenuHandler,
 } from './events/index.js';
 import { ElectionCommand, ScoreCommand } from './commands/chat/index.js';
@@ -15,37 +14,50 @@ import {
   StringSelectMenu,
 } from './components/menus/index.js';
 import { Button, HoldElectionButton } from './components/buttons/index.js';
-import { StateName } from './services/state-service.js';
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
+import {
+  ElectionStage,
+  ElectionState,
+  ElectionStateService,
+} from './models/election-state.js';
 
 async function start(): Promise<void> {
   const client = new Client({
     intents: Config.client.intents,
   });
 
-  const stateService = new StateService();
-  stateService.init(StateName.Election);
+  const pickElectionMenu = new PickElectionMenu();
+  const pickCandidatesMenu = new PickCandidatesMenu();
+  const holdElectionButton = new HoldElectionButton();
+
+  // the callback queue is filled backwards because we pop it for efficiency
+  const INITIAL_ELECTION_STATE: ElectionState = {
+    stage: ElectionStage.ANNOUNCEMENT,
+    stop: false,
+    callbackQueue: [
+      holdElectionButton.create,
+      pickCandidatesMenu.create,
+      pickElectionMenu.create,
+    ],
+  };
+
+  const electionStateService = new ElectionStateService(INITIAL_ELECTION_STATE);
 
   const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
-  const menus: StringSelectMenu[] = [
-    new PickElectionMenu(),
-    new PickCandidatesMenu(),
-  ];
-  const buttons: Button[] = [new HoldElectionButton()];
+  const menus: StringSelectMenu[] = [pickElectionMenu, pickCandidatesMenu];
+  const buttons: Button[] = [holdElectionButton];
 
-  const commandHandler = new CommandHandler(commands, stateService);
-  const messageHandler = new MessageHandler();
+  const commandHandler = new CommandHandler(commands, electionStateService);
   const stringSelectMenuHandler = new StringSelectMenuHandler(
     menus,
-    stateService
+    electionStateService
   );
-  const buttonHandler = new ButtonHandler(buttons, stateService);
+  const buttonHandler = new ButtonHandler(buttons, electionStateService);
 
   const bot = new Bot(
     Config.client.token,
     client,
     commandHandler,
-    messageHandler,
     stringSelectMenuHandler,
     buttonHandler
   );
@@ -72,7 +84,7 @@ async function start(): Promise<void> {
 }
 
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled rejection:' + reason);
+  console.error('Unhandled rejection: ' + reason);
 });
 
 start().catch((error) => {

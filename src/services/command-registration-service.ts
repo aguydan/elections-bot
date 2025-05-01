@@ -4,7 +4,7 @@ import {
   RESTPostAPIApplicationCommandsJSONBody,
   Routes,
 } from 'discord.js';
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
 
 export class CommandRegistrationService {
   constructor(private rest: REST) {}

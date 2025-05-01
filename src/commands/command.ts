@@ -1,3 +1,4 @@
+import { StateService } from '@/services/state-service.js';
 import {
   ApplicationCommandOptionChoiceData,
   AutocompleteFocusedOption,
@@ -9,7 +10,7 @@ export interface Command {
   name: string;
   execute(
     interaction: CommandInteraction,
-    data?: Record<string, any>
+    stateService: StateService
   ): Promise<void>;
   autocomplete?(
     interaction: AutocompleteInteraction,

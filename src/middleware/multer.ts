@@ -1,6 +1,6 @@
 import { mkdirp } from 'mkdirp';
 import multer from 'multer';
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
 
 const { staticDir, uploadsDir } = Config.api;
 

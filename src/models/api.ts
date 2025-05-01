@@ -3,7 +3,7 @@ import { handleError } from '@/middleware/index.js';
 import express, { Express } from 'express';
 import util from 'node:util';
 import cors from 'cors';
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
 
 const { staticDir, port } = Config.api;
 

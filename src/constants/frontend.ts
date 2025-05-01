@@ -1,4 +1,4 @@
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
 
 const { protocol, hostname, port } = Config.frontend;
 

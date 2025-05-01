@@ -1,25 +1,57 @@
-import { APIEmbed, AttachmentBuilder, ButtonInteraction } from 'discord.js';
+import {
+  APIEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonInteraction,
+  ButtonStyle,
+  TextBasedChannel,
+} from 'discord.js';
 import { Button } from './index.js';
 import { InteractionUtils } from '@/utils/interaction-utils.js';
 import { ElectionResultsBuilder } from '@/models/election-results-builder.js';
-import { FrontendUtils } from '@/utils/frontend-utils.js';
-import { StateName, StateService } from '@/services/state-service.js';
 import { RegexUtils } from '@/utils/regex-utils.js';
-import { API_PATH } from '@/constants/api.js';
 import { i18n } from '@/utils/i18n.js';
+import {
+  ElectionStage,
+  ElectionStateService,
+} from '@/models/election-state.js';
 
 export class HoldElectionButton implements Button {
-  public names = ['hold-election-button'];
+  public name = 'hold-election-button';
 
-  public async execute(
-    prevInteraction: ButtonInteraction,
-    stateService: StateService
+  constructor() {
+    // we use this method as a callback passed to the state so the context is lost
+    this.create = this.create.bind(this);
+  }
+
+  public async create(
+    stateId: string,
+    channel: TextBasedChannel
+  ): Promise<void> {
+    const button = new ActionRowBuilder<ButtonBuilder>({
+      components: [
+        new ButtonBuilder({
+          custom_id: `${this.name}-${stateId}`,
+          label: i18n.__('buttons.holdElection.label'),
+          style: ButtonStyle.Primary,
+        }),
+      ],
+    });
+
+    await channel.send({
+      components: [button],
+    });
+  }
+
+  public async handle(
+    interaction: ButtonInteraction,
+    stateService: ElectionStateService
   ) {
-    const stateId = RegexUtils.getStateId(prevInteraction.customId);
+    const stateId = RegexUtils.getStateId(interaction.customId);
 
-    const loadingImage = new AttachmentBuilder(
+    /*     const loadingImage = new AttachmentBuilder(
       `${API_PATH}/embeds/counting-ballots.gif`
-    );
+    ); */
 
     const loadingEmbed: APIEmbed = {
       color: 0xf0c445,
@@ -34,22 +66,17 @@ export class HoldElectionButton implements Button {
       timestamp: new Date().toISOString(),
     };
 
-    await InteractionUtils.send(prevInteraction, {
+    await InteractionUtils.send(interaction, {
       embeds: [loadingEmbed],
-      files: [loadingImage],
+      //       files: [loadingImage],
     });
 
-    const value = stateService.get(StateName.Election, stateId);
-    const { election, candidates } = value;
+    const state = stateService.get(stateId);
+    const { election, candidates } = state;
 
-    // this should be inside the state get method. why is it here?
-    // or.......
     if (!election || !candidates) {
       throw new Error(
-        i18n.__mf('errors.stateLacksData', {
-          state: StateName.Election,
-          value: JSON.stringify(value),
-        })
+        `Election state by the id ${stateId} lacks required data`
       );
     }
 
@@ -82,27 +109,7 @@ export class HoldElectionButton implements Button {
     const winner = withCandidates[0]!;
     const losers = withCandidates.slice(1);
 
-    stateService.delete(StateName.Election, stateId);
-
-    /* 
-            this is for sending a message to guild members about whether they want to challenge the results or not
-
-            const { guild } = prevInteraction;
-
-            if (!guild) {
-                console.log('no guild');
-
-                return;
-            }
-
-            const members = await guild.members.fetch();
-            members
-                .filter(v => !v.user.bot)
-                .mapValues(v => {
-                    v.user.send('Do you accept election results?');
-                });
-        */
-    const buffer = await FrontendUtils.getResultsImage();
+    /*     const buffer = await FrontendUtils.getResultsImage();
 
     //everything else here should be based on whether buffer was received or not
     let resultsEmbed: APIEmbed;
@@ -125,17 +132,17 @@ export class HoldElectionButton implements Button {
           url: 'attachment://results.jpg',
         },
         timestamp: new Date().toISOString(),
-      };
+      }; */
 
-      await InteractionUtils.editReply(prevInteraction, {
+    /*       await InteractionUtils.editReply(prevInteraction, {
         embeds: [resultsEmbed],
         files: [image],
       });
 
       return;
-    }
+    } */
 
-    resultsEmbed = {
+    const resultsEmbed = {
       color: Number('0x' + winner.color.slice(1)),
       title: i18n.__('embeds.results.title'),
       description: i18n.__('embeds.results.withoutImage.description'),
@@ -157,9 +164,16 @@ export class HoldElectionButton implements Button {
       timestamp: new Date().toISOString(),
     };
 
-    await InteractionUtils.editReply(prevInteraction, {
+    await InteractionUtils.editReply(interaction, {
       embeds: [resultsEmbed],
-      files: [],
+      //       files: [],
     });
+
+    stateService.set(stateId, (prev) => ({
+      ...prev,
+      stage: ElectionStage.FINISHED,
+    }));
+
+    stateService.nextStep(stateId);
   }
 }

@@ -1,11 +1,21 @@
 import { RegexUtils } from '@/utils/regex-utils.js';
 
-export class StateService<State extends Record<string, any>> {
-  private _initialState: State;
+export class StateService<
+  State extends Record<string, any> = Record<string, any>,
+> {
   private _stateMap = new Map<string, State>();
 
-  constructor(initialState: State) {
-    this._initialState = initialState;
+  constructor(private _initialState: State) {}
+
+  get initialState(): State {
+    return this._initialState;
+  }
+
+  public init(id: string): void {
+    //shallow copy. don't know if there's a better way yet
+    const state = { ...this.initialState };
+
+    this.set(id, state);
   }
 
   public set(id: string, callback: (prev: State) => State): void;
@@ -15,7 +25,7 @@ export class StateService<State extends Record<string, any>> {
     newStateValue: State | ((prev: State) => State)
   ): void {
     const uuid = RegexUtils.getStateId(id);
-    let value = this._stateMap.get(uuid) ?? this._initialState;
+    let value = this._stateMap.get(uuid) ?? this.initialState;
 
     if (typeof newStateValue === 'function') {
       value = newStateValue(value);

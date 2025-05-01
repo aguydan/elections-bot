@@ -1,9 +1,11 @@
-import { ButtonInteraction } from 'discord.js';
+import { StateService } from '@/services/state-service.js';
+import { ButtonInteraction, TextBasedChannel } from 'discord.js';
 
 export interface Button {
-  names: string[];
-  execute(
+  name: string;
+  create(stateId: string, channel: TextBasedChannel): Promise<void>;
+  handle(
     interaction: ButtonInteraction,
-    data?: Record<string, any>
+    stateService: StateService
   ): Promise<void>;
 }

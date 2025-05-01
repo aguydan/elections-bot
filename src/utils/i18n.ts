@@ -1,6 +1,6 @@
 import i18n from 'i18n';
 import { join } from 'path';
-import Config from '@/../config/config.json';
+import Config from '@/../config/config.json' with { type: 'json' };
 
 i18n.configure({
   locales: ['en', 'ru'],
