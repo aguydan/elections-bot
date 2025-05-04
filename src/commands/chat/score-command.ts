@@ -16,24 +16,27 @@ export class ScoreCommand implements Command {
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
-    const args = {
-      candidateId: interaction.options.getInteger('candidate', true),
-      scoreParameter: interaction.options.getString('score_parameter', true),
-      operation: interaction.options.getString('operation', true),
-      value: interaction.options.getInteger('value'),
-    };
+    const candidateId = interaction.options.getInteger('candidate', true);
+    const scoreParameter = interaction.options.getString(
+      'score_parameter',
+      true
+    );
+    const operation = interaction.options.getString('operation', true);
+    const value = interaction.options.getInteger('value');
 
-    const { score } = await candidateRepo.getById(args.candidateId);
+    const { score } = await candidateRepo.getById(candidateId);
 
-    let prev = score[args.scoreParameter];
+    let prev = score[scoreParameter];
 
-    if (prev == undefined) {
-      throw new Error('No such score parameter: ' + args.scoreParameter);
+    if (prev === undefined) {
+      await InteractionUtils.send(interaction, 'No such parameter.');
+
+      return;
     }
 
-    const changeValue = args.value ? args.value / 100 : this._changeValue;
+    const changeValue = value ? value / 100 : this._changeValue;
 
-    switch (args.operation) {
+    switch (operation) {
       case '+':
         prev += changeValue;
 
@@ -46,20 +49,14 @@ export class ScoreCommand implements Command {
         break;
     }
 
-    score[args.scoreParameter] = parseFloat(
+    score[scoreParameter] = parseFloat(
       Math.max(0, Math.min(prev, 100)).toFixed(2)
     );
 
-    await candidateRepo.updateScore(args.candidateId, score);
+    await candidateRepo.updateScore(candidateId, score);
 
     await InteractionUtils.send(interaction, {
-      content:
-        'we changed ' +
-        args.scoreParameter +
-        ' ' +
-        args.operation +
-        ' ' +
-        args.value,
+      content: 'we changed ' + scoreParameter + ' ' + operation + ' ' + value,
     });
   }
 
@@ -69,8 +66,9 @@ export class ScoreCommand implements Command {
   ): Promise<ApplicationCommandOptionChoiceData[]> {
     const data = await candidateRepo.searchByName(option.value);
 
-    return data.map((candidate) => {
-      return { name: candidate.name, value: candidate.id };
-    });
+    return data.map((candidate) => ({
+      name: candidate.name,
+      value: candidate.id,
+    }));
   }
 }

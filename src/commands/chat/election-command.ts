@@ -10,6 +10,8 @@ export class ElectionCommand implements Command {
     interaction: ChatInputCommandInteraction,
     stateService: ElectionStateService
   ): Promise<void> {
+    const stop = interaction.options.getBoolean('stop') ?? false;
+
     const stateId = crypto.randomUUID();
 
     //initialize state
@@ -23,7 +25,7 @@ export class ElectionCommand implements Command {
     //set the stop value depending on an argument
     stateService.set(stateId, (prev) => ({
       ...prev,
-      stop: false,
+      stop,
       channel: channel,
     }));
 

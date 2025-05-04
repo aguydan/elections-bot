@@ -7,7 +7,12 @@ import {
   CommandHandler,
   StringSelectMenuHandler,
 } from './events/index.js';
-import { ElectionCommand, ScoreCommand } from './commands/chat/index.js';
+import {
+  DiscardCommand,
+  ElectionCommand,
+  NextCommand,
+  ScoreCommand,
+} from './commands/chat/index.js';
 import {
   PickCandidatesMenu,
   PickElectionMenu,
@@ -43,7 +48,12 @@ async function start(): Promise<void> {
 
   const electionStateService = new ElectionStateService(INITIAL_ELECTION_STATE);
 
-  const commands: Command[] = [new ElectionCommand(), new ScoreCommand()];
+  const commands: Command[] = [
+    new ElectionCommand(),
+    new ScoreCommand(),
+    new NextCommand(),
+    new DiscardCommand(),
+  ];
   const menus: StringSelectMenu[] = [pickElectionMenu, pickCandidatesMenu];
   const buttons: Button[] = [holdElectionButton];
 

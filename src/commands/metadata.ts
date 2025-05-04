@@ -11,6 +11,42 @@ export const ChatCommandMetadata: {
     type: ApplicationCommandType.ChatInput,
     name: 'election',
     description: "We're holding an election!",
+    options: [
+      {
+        name: 'stop',
+        description: 'Whether the election should stop after each stage',
+        type: 5,
+        required: false,
+      },
+    ],
+  },
+  NEXT: {
+    type: ApplicationCommandType.ChatInput,
+    name: 'next',
+    description: 'Advance to the next stage in the election',
+    options: [
+      {
+        name: 'election',
+        description: 'Election UUID',
+        type: 3,
+        required: true,
+        autocomplete: true,
+      },
+    ],
+  },
+  DISCARD: {
+    type: ApplicationCommandType.ChatInput,
+    name: 'discard',
+    description: 'Discard the election prematurely',
+    options: [
+      {
+        name: 'election',
+        description: 'Election UUID',
+        type: 3,
+        required: true,
+        autocomplete: true,
+      },
+    ],
   },
   SCORE: {
     type: ApplicationCommandType.ChatInput,

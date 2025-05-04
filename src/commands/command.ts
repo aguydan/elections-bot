@@ -14,6 +14,7 @@ export interface Command {
   ): Promise<void>;
   autocomplete?(
     interaction: AutocompleteInteraction,
-    option: AutocompleteFocusedOption
+    option: AutocompleteFocusedOption,
+    stateService: StateService
   ): Promise<ApplicationCommandOptionChoiceData[]>;
 }

@@ -50,7 +50,11 @@ export class CommandHandler implements EventHandler {
 
       try {
         const option = interaction.options.getFocused(true);
-        const choices = await command.autocomplete(interaction, option);
+        const choices = await command.autocomplete(
+          interaction,
+          option,
+          this.stateService
+        );
 
         InteractionUtils.respond(interaction, choices?.slice(0, 25));
       } catch (error) {

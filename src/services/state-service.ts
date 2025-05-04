@@ -11,6 +11,10 @@ export class StateService<
     return this._initialState;
   }
 
+  get keys(): string[] {
+    return [...this._stateMap.keys()];
+  }
+
   public init(id: string): void {
     //shallow copy. don't know if there's a better way yet
     const state = { ...this.initialState };
