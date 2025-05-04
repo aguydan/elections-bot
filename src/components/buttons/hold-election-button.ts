@@ -88,6 +88,8 @@ export class HoldElectionButton implements Button {
 
     await builder.save(election.id);
 
+    // this all could happen over on the db side
+
     const results = builder.results;
     results.sort((a, b) => b.percentage - a.percentage);
 
@@ -108,39 +110,6 @@ export class HoldElectionButton implements Button {
 
     const winner = withCandidates[0]!;
     const losers = withCandidates.slice(1);
-
-    /*     const buffer = await FrontendUtils.getResultsImage();
-
-    //everything else here should be based on whether buffer was received or not
-    let resultsEmbed: APIEmbed;
-
-    if (buffer) {
-      const image = new AttachmentBuilder(buffer, {
-        name: 'results.jpg',
-      });
-
-      resultsEmbed = {
-        color: Number('0x' + winner.color.slice(1)),
-        title: i18n.__('embeds.results.title'),
-        description: i18n.__('embeds.results.withImage.description', {
-          winner: winner.name,
-        }),
-        author: {
-          name: i18n.__('election.commission'),
-        },
-        image: {
-          url: 'attachment://results.jpg',
-        },
-        timestamp: new Date().toISOString(),
-      }; */
-
-    /*       await InteractionUtils.editReply(prevInteraction, {
-        embeds: [resultsEmbed],
-        files: [image],
-      });
-
-      return;
-    } */
 
     const resultsEmbed = {
       color: Number('0x' + winner.color.slice(1)),

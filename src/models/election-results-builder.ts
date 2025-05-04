@@ -190,12 +190,12 @@ export class ElectionResultsBuilder<T extends PartialData> {
     this: ElectionResultsBuilder<CompleteData>,
     electionId: number
   ) {
-    const heldElectionId = await heldElectionRepo.create({
-      created_at: new Date(),
-      election_id: electionId,
-    });
-
     try {
+      const heldElectionId = await heldElectionRepo.create({
+        created_at: new Date(),
+        election_id: electionId,
+      });
+
       Promise.all(
         this.results.map((data) => {
           const { id, popularVote, percentage } = data;

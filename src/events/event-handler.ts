@@ -1,3 +1,5 @@
+import { BaseInteraction } from 'discord.js';
+
 export interface EventHandler {
-    process(...args: any[]): Promise<void>;
+  process(interaction: BaseInteraction): Promise<void>;
 }

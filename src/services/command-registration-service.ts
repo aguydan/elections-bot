@@ -38,7 +38,7 @@ export class CommandRegistrationService {
                 }
               );
 
-              console.log('command action created');
+              console.log('Command action created');
             }
           }
 
@@ -51,7 +51,7 @@ export class CommandRegistrationService {
                 }
               );
 
-              console.log('command action updated');
+              console.log('Command action updated');
             }
           }
         }

@@ -11,46 +11,46 @@ import { candidateRepo } from '@/database/database.js';
 export class ScoreCommand implements Command {
   public name = 'score';
 
+  private _changeValue = 0.05;
+
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
-    const DEFAULT_VALUE = 0.05;
-
     const args = {
-      scoreParameter: interaction.options.getString('score_parameter'),
-      operation: interaction.options.getString('operation'),
+      candidateId: interaction.options.getInteger('candidate', true),
+      scoreParameter: interaction.options.getString('score_parameter', true),
+      operation: interaction.options.getString('operation', true),
       value: interaction.options.getInteger('value'),
     };
 
-    const id = interaction.options.get('candidate')?.value as number | null;
-    if (!id) {
-      throw new Error('no candidate provided');
+    const { score } = await candidateRepo.getById(args.candidateId);
+
+    let prev = score[args.scoreParameter];
+
+    if (prev == undefined) {
+      throw new Error('No such score parameter: ' + args.scoreParameter);
     }
 
-    const { score } = await candidateRepo.getById(id);
+    const changeValue = args.value ? args.value / 100 : this._changeValue;
 
-    const prev = score[args.scoreParameter!];
-    if (prev === undefined || prev === null) {
-      throw new Error('No such score parameter as: ' + args.scoreParameter);
+    switch (args.operation) {
+      case '+':
+        prev += changeValue;
+
+        break;
+      case '-':
+        prev -= changeValue;
+
+        break;
+      default:
+        break;
     }
 
-    const value = args.value ? args.value / 100 : DEFAULT_VALUE;
-
-    let curr = 0;
-
-    if (args.operation == '+') {
-      curr = prev + value;
-    }
-
-    if (args.operation == '-') {
-      curr = prev - value;
-    }
-
-    score[args.scoreParameter!] = parseFloat(
-      Math.max(0, Math.min(curr, 100)).toFixed(2)
+    score[args.scoreParameter] = parseFloat(
+      Math.max(0, Math.min(prev, 100)).toFixed(2)
     );
 
-    await candidateRepo.updateScore(id, score);
+    await candidateRepo.updateScore(args.candidateId, score);
 
     await InteractionUtils.send(interaction, {
       content:

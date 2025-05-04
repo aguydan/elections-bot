@@ -4,16 +4,7 @@ import {
   StringSelectMenuHandler,
 } from '@/events/index.js';
 import { InteractionUtils } from '@/utils/interaction-utils.js';
-import {
-  AutocompleteInteraction,
-  ButtonInteraction,
-  Client,
-  CommandInteraction,
-  EmbedBuilder,
-  Events,
-  Interaction,
-  StringSelectMenuInteraction,
-} from 'discord.js';
+import { Client, EmbedBuilder, Events, Interaction } from 'discord.js';
 
 export class Bot {
   private ready = false;
@@ -28,6 +19,7 @@ export class Bot {
 
   public async start(): Promise<void> {
     this.registerListeners();
+
     await this.login(this.token);
   }
 
@@ -58,26 +50,25 @@ export class Bot {
     if (!this.ready) return;
 
     try {
-      if (
-        interaction instanceof CommandInteraction ||
-        interaction instanceof AutocompleteInteraction
-      ) {
+      if (interaction.isCommand() || interaction.isAutocomplete()) {
         await this.commandHandler.process(interaction);
       }
 
-      if (interaction instanceof StringSelectMenuInteraction) {
+      if (interaction.isStringSelectMenu()) {
         await this.stringSelectMenuHandler.process(interaction);
       }
 
-      if (interaction instanceof ButtonInteraction) {
+      if (interaction.isButton()) {
         await this.buttonHandler.process(interaction);
       }
     } catch (error) {
       console.error(error);
 
+      if (!interaction.isRepliable()) return;
+
       const errorEmbed = new EmbedBuilder({
         color: 0xff0000,
-        title: '',
+        title: 'Error',
         description: '',
         timestamp: new Date().toISOString(),
         footer: {

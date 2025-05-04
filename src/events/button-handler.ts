@@ -21,15 +21,17 @@ export class ButtonHandler implements EventHandler {
     const buttonName = RegexUtils.getComponentName(interaction.customId);
 
     if (!buttonName) {
-      throw new Error('invalid component name');
+      throw new Error('Invalid component name');
     }
 
     const button = this.buttons.find((button) => button.name === buttonName);
 
     if (!button) {
-      throw new Error('no button with id: ' + buttonName);
+      throw new Error('No button with the ID: ' + buttonName);
     }
 
     await button.handle(interaction, this.stateService);
+
+    console.log('Interacts with the button: ' + interaction.customId);
   }
 }

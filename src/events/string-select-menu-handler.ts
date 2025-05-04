@@ -23,17 +23,17 @@ export class StringSelectMenuHandler implements EventHandler {
     const menuName = RegexUtils.getComponentName(interaction.customId);
 
     if (!menuName) {
-      throw new Error('invalid component name');
+      throw new Error('Invalid component name');
     }
 
     const menu = this.menus.find((menu) => menu.name === menuName);
 
     if (!menu) {
-      throw new Error('no menu with id: ' + menuName);
+      throw new Error('No menu with ID: ' + menuName);
     }
 
     await menu.handle(interaction, this.stateService);
 
-    console.log('interacts with select menu', interaction.customId);
+    console.log('Interacts with the select menu: ' + interaction.customId);
   }
 }

@@ -1,14 +1,12 @@
 import {
   ApplicationCommandOptionChoiceData,
   AutocompleteInteraction,
-  CommandInteraction,
   DiscordAPIError,
   RESTJSONErrorCodes as DiscordApiErrors,
   EmbedBuilder,
   InteractionReplyOptions,
   Message,
-  MessageComponentInteraction,
-  ModalSubmitInteraction,
+  RepliableInteraction,
   WebhookMessageEditOptions,
 } from 'discord.js';
 
@@ -25,10 +23,7 @@ const IGNORED_ERRORS = [
 
 export class InteractionUtils {
   public static async send(
-    interaction:
-      | CommandInteraction
-      | MessageComponentInteraction
-      | ModalSubmitInteraction,
+    interaction: RepliableInteraction,
     content: string | EmbedBuilder | InteractionReplyOptions,
     hidden: boolean = false
   ): Promise<Message | undefined> {
@@ -45,13 +40,13 @@ export class InteractionUtils {
           ...options,
           ephemeral: hidden,
         });
-      } else {
-        return await interaction.reply({
-          ...options,
-          ephemeral: hidden,
-          fetchReply: true,
-        });
       }
+
+      return await interaction.reply({
+        ...options,
+        ephemeral: hidden,
+        fetchReply: true,
+      });
     } catch (error) {
       if (
         error instanceof DiscordAPIError &&
@@ -59,9 +54,9 @@ export class InteractionUtils {
         IGNORED_ERRORS.includes(error.code)
       ) {
         return;
-      } else {
-        throw error;
       }
+
+      throw error;
     }
   }
 
@@ -78,26 +73,24 @@ export class InteractionUtils {
         IGNORED_ERRORS.includes(error.code)
       ) {
         return;
-      } else {
-        throw error;
       }
+
+      throw error;
     }
   }
 
   public static async editReply(
-    interaction:
-      | CommandInteraction
-      | MessageComponentInteraction
-      | ModalSubmitInteraction,
+    interaction: RepliableInteraction,
     content: string | EmbedBuilder | WebhookMessageEditOptions
   ): Promise<Message | undefined> {
     try {
-      let options: WebhookMessageEditOptions =
+      const options: WebhookMessageEditOptions =
         typeof content === 'string'
           ? { content }
           : content instanceof EmbedBuilder
             ? { embeds: [content] }
             : content;
+
       return await interaction.editReply(options);
     } catch (error) {
       if (
@@ -106,9 +99,9 @@ export class InteractionUtils {
         IGNORED_ERRORS.includes(error.code)
       ) {
         return;
-      } else {
-        throw error;
       }
+
+      throw error;
     }
   }
 }
